@@ -1,0 +1,13 @@
+{
+    "colors": [
+        {"code": "RAL1019", "type": "R", "lunghezza_ordine": "corto"},
+        {"code": "RAL1007", "type": "F", "lunghezza_ordine": "corto"},
+        {"code": "RAL1021", "type": "K", "lunghezza_ordine": "corto"}
+    ],
+    "partial_cluster_order": [
+        {"cluster": "Bianco", "locked": true},
+        {"cluster": "Giallo", "locked": false},
+        {"cluster": "Rosso", "locked": false}
+    ],
+    "prioritized_reintegrations": []
+}

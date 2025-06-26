@@ -1,0 +1,4 @@
+Flask
+requests
+Flask-WTF # Per i form
+gunicorn # Opzionale, per produzione al posto del server di sviluppo Flask

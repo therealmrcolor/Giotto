@@ -1,0 +1,23 @@
+{
+  "colors_today": [
+    {
+      "code": "RAL9006",
+      "type": "E",
+      "sequence": 4,
+      "lunghezza_ordine": "corto"
+    },
+    {
+      "code": "RAL7040",
+      "type": "R",
+      "sequence": null,
+      "lunghezza_ordine": "corto"
+    },
+    {
+      "code": "RAL3020",
+      "type": "E",
+      "lunghezza_ordine": "corto"
+    }
+  ],
+  "start_cluster_name": null,
+  "prioritized_reintegrations": []
+}

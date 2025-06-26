@@ -1,0 +1,4 @@
+fastapi
+uvicorn[standard] # Include supporto per server asincrono, websockets etc.
+numpy
+pydantic

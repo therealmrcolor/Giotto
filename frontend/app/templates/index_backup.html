@@ -1,0 +1,729 @@
+{% extends "base.html" %}
+
+{% block title %}Home - Sistema Ottimizzazione Colori{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <h1 class="h2 mb-4">
+            <i class="fas fa-palette me-2 text-primary"></i>
+            Sistema Ottimizzazione Colori
+        </h1>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Form Input Colori -->
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-upload me-2"></i>
+                    Carica Lista Colori
+                </h5>
+            </div>
+            <div class="card-body">
+                <form id="optimizationForm">
+                    <div class="mb-3">
+                        <label for="colorsJson" class="form-label">Lista Colori (formato JSON)</label>
+                        <textarea class="form-control json-editor" id="colorsJson" name="colorsJson" rows="12" placeholder='[
+  {
+    "code": "RAL9005",
+    "type": "R",
+    "sequence": 1,
+    "lunghezza_ordine": "corto",
+    "CH": 25.5
+  },
+  {
+    "code": "RAL1013",
+    "type": "F",
+    "sequence": 2,
+    "lunghezza_ordine": "lungo",
+    "CH": 30.2
+  }
+]'></textarea>
+                        <div class="form-text">
+                            Inserisci la lista colori in formato JSON. Ogni colore deve avere almeno i campi: code, type, lunghezza_ordine.
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="startCluster" class="form-label">Cluster di Partenza (opzionale)</label>
+                        <select class="form-select" id="startCluster" name="startCluster">
+                            <option value="">-- Seleziona cluster di partenza --</option>
+                        </select>
+                        <div class="form-text">
+                            Se non specificato, il sistema determinerà automaticamente il cluster di partenza ottimale.
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <button type="button" class="btn btn-outline-secondary w-100 mb-2" onclick="loadExampleJson()">
+                                <i class="fas fa-file-import me-2"></i>
+                                Carica JSON di Esempio
+                            </button>
+                        </div>
+                        <div class="col-md-6">
+                            <button type="submit" class="btn btn-primary w-100 mb-2">
+                                <i class="fas fa-cogs me-2"></i>
+                                <span class="btn-text">Avvia Ottimizzazione</span>
+                                <span class="spinner-border spinner-border-sm d-none" role="status">
+                                    <span class="visually-hidden">Loading...</span>
+                                </span>
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Stato Cabine -->
+    <div class="col-lg-4">
+        <div class="card">
+            <div class="card-header bg-info text-white">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-tachometer-alt me-2"></i>
+                    Stato Cabine
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="cabin-status" id="cabinStatus">
+                    <div class="row">
+                        <div class="col-12 mb-3">
+                            <div class="card cabin-card bg-light">
+                                <div class="card-body">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <div>
+                                            <h6 class="card-title mb-1">
+                                                <i class="fas fa-industry me-2 text-primary"></i>
+                                                Cabina 1 (Corto)
+                                            </h6>
+                                            <p class="card-text small text-muted mb-1">
+                                                <span id="cabin1-total">0</span> colori totali
+                                            </p>
+                                            <p class="card-text small text-muted mb-0">
+                                                In esecuzione: <span id="cabin1-executing">0</span> | 
+                                                Completati: <span id="cabin1-completed">0</span>
+                                            </p>
+                                        </div>
+                                        <a href="{{ url_for('cabin_view', cabin_id=1) }}" class="btn btn-outline-primary btn-sm">
+                                            Visualizza
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-12">
+                            <div class="card cabin-card bg-light">
+                                <div class="card-body">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <div>
+                                            <h6 class="card-title mb-1">
+                                                <i class="fas fa-industry me-2 text-success"></i>
+                                                Cabina 2 (Lungo)
+                                            </h6>
+                                            <p class="card-text small text-muted mb-1">
+                                                <span id="cabin2-total">0</span> colori totali
+                                            </p>
+                                            <p class="card-text small text-muted mb-0">
+                                                In esecuzione: <span id="cabin2-executing">0</span> | 
+                                                Completati: <span id="cabin2-completed">0</span>
+                                            </p>
+                                        </div>
+                                        <a href="{{ url_for('cabin_view', cabin_id=2) }}" class="btn btn-outline-success btn-sm">
+                                            Visualizza
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Azioni Rapide -->
+        <div class="card mt-3">
+            <div class="card-header bg-secondary text-white">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-bolt me-2"></i>
+                    Azioni Rapide
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    <button type="button" class="btn btn-outline-info btn-sm" onclick="refreshCabinStatus()">
+                        <i class="fas fa-sync-alt me-2"></i>
+                        Aggiorna Stato Cabine
+                    </button>
+                    <button type="button" class="btn btn-outline-warning btn-sm" onclick="clearAllData()">
+                        <i class="fas fa-trash-alt me-2"></i>
+                        Pulisci Tutte le Liste
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Risultati Ottimizzazione -->
+<div class="row mt-4" id="resultsContainer" style="display: none;">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header bg-success text-white">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-check-circle me-2"></i>
+                    Risultati Ottimizzazione
+                </h5>
+            </div>
+            <div class="card-body">
+                <div id="optimizationResults">
+                    <!-- I risultati verranno inseriti qui via JavaScript -->
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Variabili globali
+let availableClusters = [];
+let currentAlternativeSequences = [];
+let originalOptimizationResults = null;
+
+// Carica i clusters disponibili al caricamento della pagina
+$(document).ready(function() {
+    loadAvailableClusters();
+    refreshCabinStatus();
+});
+
+// Carica la lista dei clusters disponibili
+function loadAvailableClusters() {
+    $.get('/api/clusters')
+        .done(function(data) {
+            availableClusters = data.clusters || [];
+            const select = $('#startCluster');
+            select.empty();
+            select.append('<option value="">-- Seleziona cluster di partenza --</option>');
+            availableClusters.forEach(cluster => {
+                select.append(`<option value="${cluster}">${cluster}</option>`);
+            });
+        })
+        .fail(function() {
+            console.warn('Impossibile caricare i clusters disponibili');
+        });
+}
+
+// Carica JSON di esempio
+function loadExampleJson() {
+    const exampleJson = [
+        {"code": "RAL7048", "type": "E", "CH": 1.5, "lunghezza_ordine": "corto"},
+        {"code": "RAL7044", "type": "E", "CH": 2.0, "lunghezza_ordine": "corto"},
+        {"code": "RAL5017", "type": "K", "CH": 3.2, "lunghezza_ordine": "lungo"},
+        {"code": "69115038", "type": "R", "CH": 1.8, "lunghezza_ordine": "corto"},
+        {"code": "RAL1019", "type": "RE", "CH": 2.5, "lunghezza_ordine": "lungo"},
+        {"code": "160024", "type": "F", "CH": 4.1, "lunghezza_ordine": "lungo"},
+        {"code": "20889000", "type": "E", "CH": 1.2, "lunghezza_ordine": "corto"},
+        {"code": "54864032", "type": "K", "CH": 3.8, "lunghezza_ordine": "lungo"},
+        {"code": "RAL9023", "type": "E", "CH": 2.1, "lunghezza_ordine": "corto"},
+        {"code": "RAL9006", "type": "E", "CH": 2.3, "lunghezza_ordine": "lungo"},
+        {"code": "RAL9007", "type": "E", "CH": 2.7, "lunghezza_ordine": "lungo"},
+        {"code": "RAL9001", "type": "E", "CH": 1.9, "lunghezza_ordine": "corto"},
+        {"code": "160058", "type": "K", "CH": 3.5, "lunghezza_ordine": "lungo"},
+        {"code": "160000", "type": "K", "CH": 3.6, "lunghezza_ordine": "lungo"},
+        {"code": "52546000", "type": "E", "CH": 1.7, "lunghezza_ordine": "corto"},
+        {"code": "38399000", "type": "RE", "CH": 2.8, "lunghezza_ordine": "lungo"},
+        {"code": "47177000", "type": "K", "CH": 3.1, "lunghezza_ordine": "lungo"},
+        {"code": "RAL7024", "type": "K", "CH": 3.0, "lunghezza_ordine": "lungo"},
+        {"code": "RAL7015", "type": "F", "CH": 4.0, "lunghezza_ordine": "lungo"},
+        {"code": "RAL7011", "type": "K", "CH": 3.3, "lunghezza_ordine": "lungo"},
+        {"code": "RAL8019", "type": "K", "CH": 3.4, "lunghezza_ordine": "lungo"},
+        {"code": "RAL9006", "type": "K", "CH": 3.7, "lunghezza_ordine": "lungo"},
+        {"code": "RAL9007", "type": "K", "CH": 3.9, "lunghezza_ordine": "lungo"},
+        {"code": "RAL9023", "type": "K", "CH": 2.2, "lunghezza_ordine": "lungo"},
+        {"code": "RAL9005", "type": "F", "CH": 4.2, "lunghezza_ordine": "lungo"},
+        {"code": "RAL9007", "type": "F", "CH": 4.3, "lunghezza_ordine": "lungo"},
+        {"code": "RAL7035", "type": "F", "CH": 4.4, "lunghezza_ordine": "lungo"},
+        {"code": "RAL3020", "type": "F", "CH": 4.5, "lunghezza_ordine": "lungo"},
+        {"code": "RAL9003", "type": "K", "CH": 3.0, "lunghezza_ordine": "lungo"},
+        {"code": "RAL7045", "type": "K", "CH": 3.1, "lunghezza_ordine": "lungo"},
+        {"code": "RAL7032", "type": "E", "CH": 2.6, "lunghezza_ordine": "corto"},
+        {"code": "RAL7030", "type": "E", "CH": 2.4, "lunghezza_ordine": "corto"},
+        {"code": "RAL1013", "type": "RE", "CH": 2.9, "lunghezza_ordine": "lungo"},
+        {"code": "RAL1015", "type": "RE", "CH": 2.7, "lunghezza_ordine": "lungo"},
+        {"code": "RAL1017", "type": "RE", "CH": 2.6, "lunghezza_ordine": "lungo"},
+        {"code": "RAL2004", "type": "F", "CH": 4.6, "lunghezza_ordine": "lungo"},
+        {"code": "RAL3000", "type": "F", "CH": 4.7, "lunghezza_ordine": "lungo"},
+        {"code": "RAL4001", "type": "F", "CH": 4.8, "lunghezza_ordine": "lungo"},
+        {"code": "RAL5002", "type": "K", "CH": 3.2, "lunghezza_ordine": "lungo"},
+        {"code": "RAL6005", "type": "K", "CH": 3.3, "lunghezza_ordine": "lungo"},
+        {"code": "RAL7001", "type": "E", "CH": 2.5, "lunghezza_ordine": "corto"},
+        {"code": "RAL8003", "type": "E", "CH": 2.8, "lunghezza_ordine": "corto"}
+    ];
+    $('#colorsJson').val(JSON.stringify(exampleJson, null, 2));
+}
+
+// Gestione form ottimizzazione
+$('#optimizationForm').on('submit', function(e) {
+    e.preventDefault();
+    
+    const colorsJsonText = $('#colorsJson').val().trim();
+    const startCluster = $('#startCluster').val();
+    
+    if (!colorsJsonText) {
+        alert('Inserisci la lista colori in formato JSON');
+        return;
+    }
+    
+    let colorsData;
+    try {
+        colorsData = JSON.parse(colorsJsonText);
+    } catch (error) {
+        alert('Formato JSON non valido: ' + error.message);
+        return;
+    }
+    
+    if (!Array.isArray(colorsData) || colorsData.length === 0) {
+        alert('La lista colori deve essere un array non vuoto');
+        return;
+    }
+    
+    // Mostra spinner
+    const btnText = $('.btn-text');
+    const spinner = $('.spinner-border');
+    btnText.addClass('d-none');
+    spinner.removeClass('d-none');
+    $('button[type="submit"]').prop('disabled', true);
+    
+    // Prepara i dati per l'API
+    const requestData = {
+        colors_today: colorsData,
+        start_cluster_name: startCluster || null
+    };
+    
+    // Chiama l'API di ottimizzazione
+    $.ajax({
+        url: '/api/optimize',
+        method: 'POST',
+        contentType: 'application/json',
+        data: JSON.stringify(requestData),
+        timeout: 60000, // 60 secondi timeout
+        success: function(response) {
+            // Memorizza i risultati e le sequenze alternative
+            originalOptimizationResults = response;
+            currentAlternativeSequences = response.alternative_sequences || [];
+            
+            displayOptimizationResults(response);
+            refreshCabinStatus();
+            $('#resultsContainer').show();
+        },
+        error: function(xhr, status, error) {
+            let errorMessage = 'Errore durante l\'ottimizzazione';
+            if (xhr.responseJSON && xhr.responseJSON.detail) {
+                errorMessage = xhr.responseJSON.detail;
+            } else if (status === 'timeout') {
+                errorMessage = 'Timeout: l\'ottimizzazione sta richiedendo troppo tempo';
+            }
+            alert(errorMessage);
+        },
+        complete: function() {
+            // Nascondi spinner
+            btnText.removeClass('d-none');
+            spinner.addClass('d-none');
+            $('button[type="submit"]').prop('disabled', false);
+        }
+    });
+});
+
+// Visualizza risultati ottimizzazione
+function displayOptimizationResults(results) {
+    const container = $('#optimizationResults');
+    container.empty();
+    
+    if (results.cabina_1 && results.cabina_2) {
+        // Risultati per cabine separate
+        container.append(`
+            <div class="alert alert-info">
+                <h6><i class="fas fa-info-circle me-2"></i>Ottimizzazione completata per entrambe le cabine</h6>
+                <p class="mb-0">${results.message}</p>
+            </div>
+        `);
+        
+        if (results.cabina_1.ordered_colors && results.cabina_1.ordered_colors.length > 0) {
+            container.append(`
+                <div class="alert alert-success">
+                    <h6><i class="fas fa-industry me-2"></i>Cabina 1 (Corto)</h6>
+                    <p class="mb-1"><strong>Colori ottimizzati:</strong> ${results.cabina_1.ordered_colors.length}</p>
+                    <p class="mb-1"><strong>Sequenza cluster:</strong> ${results.cabina_1.optimal_cluster_sequence.join(' → ')}</p>
+                    <p class="mb-0"><strong>Costo calcolato:</strong> ${results.cabina_1.calculated_cost}</p>
+                </div>
+            `);
+        }
+        
+        if (results.cabina_2.ordered_colors && results.cabina_2.ordered_colors.length > 0) {
+            container.append(`
+                <div class="alert alert-success">
+                    <h6><i class="fas fa-industry me-2"></i>Cabina 2 (Lungo)</h6>
+                    <p class="mb-1"><strong>Colori ottimizzati:</strong> ${results.cabina_2.ordered_colors.length}</p>
+                    <p class="mb-1"><strong>Sequenza cluster:</strong> ${results.cabina_2.optimal_cluster_sequence.join(' → ')}</p>
+                    <p class="mb-0"><strong>Costo calcolato:</strong> ${results.cabina_2.calculated_cost}</p>
+                </div>
+            `);
+        }
+    } else {
+        // Risultati standard
+        container.append(`
+            <div class="alert alert-success">
+                <h6><i class="fas fa-check-circle me-2"></i>Ottimizzazione completata</h6>
+                <p class="mb-1"><strong>Colori ottimizzati:</strong> ${results.ordered_colors.length}</p>
+                <p class="mb-1"><strong>Sequenza cluster:</strong> ${results.optimal_cluster_sequence.join(' → ')}</p>
+                <p class="mb-1"><strong>Costo calcolato:</strong> ${results.calculated_cost}</p>
+                <p class="mb-0">${results.message}</p>
+            </div>
+        `);
+        
+        // Mostra sequenze alternative se disponibili
+        if (results.alternative_sequences && results.alternative_sequences.length > 0) {
+            displayAlternativeSequences(results.alternative_sequences, results.optimal_cluster_sequence, container);
+        }
+    }
+    
+    container.append(`
+        <div class="text-center mt-3">
+            <a href="${window.location.origin}/cabin/1" class="btn btn-primary me-2">
+                <i class="fas fa-eye me-2"></i>Visualizza Cabina 1
+            </a>
+            <a href="${window.location.origin}/cabin/2" class="btn btn-success">
+                <i class="fas fa-eye me-2"></i>Visualizza Cabina 2
+            </a>
+        </div>
+    `);
+}
+
+// Mostra sequenze alternative
+function displayAlternativeSequences(alternatives, currentSequence, container) {
+    if (!alternatives || alternatives.length === 0) return;
+    
+    container.append(`
+        <div class="card mt-3">
+            <div class="card-header bg-info text-white">
+                <h6 class="mb-0">
+                    <i class="fas fa-route me-2"></i>
+                    Sequenze Alternative (Top ${alternatives.length + 1})
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-light">
+                    <i class="fas fa-info-circle me-2"></i>
+                    <strong>Sequenza Corrente (Migliore):</strong> ${currentSequence.join(' → ')}
+                </div>
+                <div id="alternativeSequencesList">
+                    <!-- Le sequenze alternative verranno inserite qui -->
+                </div>
+            </div>
+        </div>
+    `);
+    
+    const alternativesList = $('#alternativeSequencesList');
+    
+    alternatives.forEach((alt, index) => {
+        const isSelected = false; // Nessuna alternativa è selezionata di default
+        alternativesList.append(`
+            <div class="card mb-2 alternative-sequence-card ${isSelected ? 'border-primary' : ''}" data-sequence-index="${index}">
+                <div class="card-body py-2">
+                    <div class="row align-items-center">
+                        <div class="col-md-1">
+                            <span class="badge bg-secondary">#${index + 2}</span>
+                        </div>
+                        <div class="col-md-6">
+                            <strong>Sequenza:</strong> ${alt.sequence.join(' → ')}
+                        </div>
+                        <div class="col-md-2">
+                            <strong>Costo:</strong> <span class="text-info">${alt.cost.toFixed(2)}</span>
+                        </div>
+                        <div class="col-md-3 text-end">
+                            <button class="btn btn-sm btn-outline-primary me-1" onclick="selectAlternativeSequence(${index})" title="Seleziona questa sequenza">
+                                <i class="fas fa-check me-1"></i>Seleziona
+                            </button>
+                            <button class="btn btn-sm btn-outline-info" onclick="previewAlternativeSequence(${index})" title="Anteprima sequenza">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="row mt-1">
+                        <div class="col-12">
+                            <small class="text-muted">${alt.description}</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `);
+    });
+    
+    // Aggiungi nota esplicativa
+    alternativesList.append(`
+        <div class="alert alert-warning mt-2">
+            <i class="fas fa-lightbulb me-2"></i>
+            <strong>Nota:</strong> Queste sono le ${alternatives.length} migliori sequenze alternative trovate dall'algoritmo. 
+            Puoi selezionarne una per applicarla o visualizzarne l'anteprima.
+        </div>
+    `);
+}
+
+// Seleziona una sequenza alternativa
+function selectAlternativeSequence(sequenceIndex) {
+    if (!currentAlternativeSequences || sequenceIndex >= currentAlternativeSequences.length) {
+        alert('Sequenza non valida');
+        return;
+    }
+    
+    const selectedSequence = currentAlternativeSequences[sequenceIndex];
+    
+    if (confirm(`Vuoi applicare la sequenza alternativa #${sequenceIndex + 2}?\n\nSequenza: ${selectedSequence.sequence.join(' → ')}\nCosto: ${selectedSequence.cost.toFixed(2)}\n\nQuesta operazione riorganizzerà i colori secondo la nuova sequenza.`)) {
+        // Applica la sequenza alternativa
+        applyAlternativeSequence(selectedSequence, sequenceIndex);
+    }
+}
+
+// Anteprima di una sequenza alternativa
+function previewAlternativeSequence(sequenceIndex) {
+    if (!currentAlternativeSequences || sequenceIndex >= currentAlternativeSequences.length) {
+        alert('Sequenza non valida');
+        return;
+    }
+    
+    const sequence = currentAlternativeSequences[sequenceIndex];
+    
+    // Mostra modal di anteprima
+    showSequencePreviewModal(sequence, sequenceIndex + 2);
+}
+
+// Applica la sequenza alternativa selezionata
+function applyAlternativeSequence(selectedSequence, sequenceIndex) {
+    if (!originalOptimizationResults) {
+        alert('Dati originali non disponibili');
+        return;
+    }
+    
+    // Mostra loader
+    const container = $('#optimizationResults');
+    container.prepend(`
+        <div id="applyingLoader" class="alert alert-info">
+            <i class="fas fa-spinner fa-spin me-2"></i>
+            Applicando sequenza alternativa #${sequenceIndex + 2}...
+        </div>
+    `);
+    
+    // Simula l'applicazione della sequenza alternativa
+    // In un'implementazione completa, dovresti fare una chiamata API per riorganizzare i colori
+    setTimeout(() => {
+        $('#applyingLoader').remove();
+        
+        // Aggiorna la visualizzazione con la nuova sequenza
+        const updatedResults = { ...originalOptimizationResults };
+        updatedResults.optimal_cluster_sequence = selectedSequence.sequence;
+        updatedResults.calculated_cost = selectedSequence.cost.toFixed(2);
+        updatedResults.message = `Sequenza alternativa #${sequenceIndex + 2} applicata con successo. ${selectedSequence.description}`;
+        
+        // Rimuovi le sequenze alternative dalla vista (ora quella selezionata è la principale)
+        const remainingAlternatives = currentAlternativeSequences.filter((_, idx) => idx !== sequenceIndex);
+        updatedResults.alternative_sequences = remainingAlternatives;
+        
+        // Aggiorna l'interfaccia
+        displayOptimizationResults(updatedResults);
+        
+        // Aggiorna le sequenze memorizzate
+        currentAlternativeSequences = remainingAlternatives;
+        originalOptimizationResults = updatedResults;
+        
+        // Mostra notifica di successo
+        showSuccessNotification(`Sequenza alternativa #${sequenceIndex + 2} applicata con successo!`);
+        
+    }, 1500);
+}
+
+// Mostra modal di anteprima sequenza
+function showSequencePreviewModal(sequence, sequenceNumber) {
+    // Crea modal se non esiste
+    if ($('#sequencePreviewModal').length === 0) {
+        $('body').append(`
+            <div class="modal fade" id="sequencePreviewModal" tabindex="-1">
+                <div class="modal-dialog modal-lg">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title">
+                                <i class="fas fa-route me-2"></i>Anteprima Sequenza
+                            </h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                        </div>
+                        <div class="modal-body" id="previewModalBody">
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Chiudi</button>
+                            <button type="button" class="btn btn-primary" id="applyFromPreview">Applica Sequenza</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `);
+    }
+    
+    // Popola il contenuto del modal
+    $('#previewModalBody').html(`
+        <div class="card">
+            <div class="card-header bg-light">
+                <h6 class="mb-0">Sequenza Alternativa #${sequenceNumber}</h6>
+            </div>
+            <div class="card-body">
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <strong>Sequenza Cluster:</strong><br>
+                        <span class="badge bg-primary me-1 mb-1" style="font-size: 0.9em">${sequence.sequence.join('</span> <i class="fas fa-arrow-right mx-1"></i> <span class="badge bg-primary me-1 mb-1" style="font-size: 0.9em">')}</span>
+                    </div>
+                    <div class="col-md-3">
+                        <strong>Costo Totale:</strong><br>
+                        <span class="h5 text-info">${sequence.cost.toFixed(2)}</span>
+                    </div>
+                    <div class="col-md-3">
+                        <strong>Numero Cluster:</strong><br>
+                        <span class="h5 text-secondary">${sequence.sequence.length}</span>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-12">
+                        <strong>Descrizione:</strong><br>
+                        <p class="text-muted mb-0">${sequence.description}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="alert alert-info mt-3">
+            <i class="fas fa-info-circle me-2"></i>
+            <strong>Cosa succede se applichi questa sequenza:</strong>
+            <ul class="mb-0 mt-2">
+                <li>I colori verranno riorganizzati secondo questo ordine di cluster</li>
+                <li>Il costo totale di transizione sarà di ${sequence.cost.toFixed(2)}</li>
+                <li>La sequenza attuale verrà sostituita con questa alternativa</li>
+            </ul>
+        </div>
+    `);
+    
+    // Imposta l'azione del pulsante applica
+    $('#applyFromPreview').off('click').on('click', function() {
+        $('#sequencePreviewModal').modal('hide');
+        // Trova l'indice della sequenza nelle alternative correnti
+        const sequenceIndex = currentAlternativeSequences.findIndex(alt => 
+            JSON.stringify(alt.sequence) === JSON.stringify(sequence.sequence) && 
+            alt.cost === sequence.cost
+        );
+        if (sequenceIndex !== -1) {
+            selectAlternativeSequence(sequenceIndex);
+        }
+    });
+    
+    // Mostra il modal
+    $('#sequencePreviewModal').modal('show');
+}
+
+// Mostra notifica di successo
+function showSuccessNotification(message) {
+    // Rimuovi notifiche esistenti
+    $('.success-notification').remove();
+    
+    // Crea nuova notifica
+    $('body').append(`
+        <div class="success-notification position-fixed" style="top: 20px; right: 20px; z-index: 9999;">
+            <div class="alert alert-success alert-dismissible">
+                <i class="fas fa-check-circle me-2"></i>
+                ${message}
+                <button type="button" class="btn-close" onclick="$(this).closest('.success-notification').remove()"></button>
+            </div>
+        </div>
+    `);
+    
+    // Auto-rimuovi dopo 5 secondi
+    setTimeout(() => {
+        $('.success-notification').fadeOut(500, function() {
+            $(this).remove();
+        });
+    }, 5000);
+}
+        const sequenceIndex = currentAlternativeSequences.findIndex(alt => 
+            JSON.stringify(alt.sequence) === JSON.stringify(sequence.sequence) && 
+            alt.cost === sequence.cost
+        );
+        if (sequenceIndex !== -1) {
+            selectAlternativeSequence(sequenceIndex);
+        }
+    });
+    
+    // Mostra il modal
+    $('#sequencePreviewModal').modal('show');
+}
+
+// Mostra notifica di successo
+function showSuccessNotification(message) {
+    // Rimuovi notifiche precedenti
+    $('.success-notification').remove();
+    
+    // Crea nuova notifica
+    $('body').append(`
+        <div class="alert alert-success alert-dismissible position-fixed success-notification" 
+             style="top: 20px; right: 20px; z-index: 9999; min-width: 300px;">
+            <i class="fas fa-check-circle me-2"></i>
+            ${message}
+            <button type="button" class="btn-close" onclick="$(this).parent().remove()"></button>
+        </div>
+    `);
+    
+    // Rimuovi automaticamente dopo 5 secondi
+    setTimeout(() => {
+        $('.success-notification').fadeOut(500, function() {
+            $(this).remove();
+        });
+    }, 5000);
+}
+
+// Aggiorna stato cabine
+function refreshCabinStatus() {
+    $.get('/api/cabin-status')
+        .done(function(data) {
+            if (data.cabin_1) {
+                $('#cabin1-total').text(data.cabin_1.total || 0);
+                $('#cabin1-executing').text(data.cabin_1.executing || 0);
+                $('#cabin1-completed').text(data.cabin_1.completed || 0);
+            }
+            
+            if (data.cabin_2) {
+                $('#cabin2-total').text(data.cabin_2.total || 0);
+                $('#cabin2-executing').text(data.cabin_2.executing || 0);
+                $('#cabin2-completed').text(data.cabin_2.completed || 0);
+            }
+        })
+        .fail(function() {
+            console.warn('Impossibile aggiornare lo stato delle cabine');
+        });
+}
+
+// Pulisci tutti i dati
+function clearAllData() {
+    if (confirm('Sei sicuro di voler pulire tutte le liste delle cabine? Questa operazione non può essere annullata.')) {
+        $.post('/api/clear-all')
+            .done(function() {
+                alert('Tutte le liste sono state pulite con successo');
+                refreshCabinStatus();
+                $('#resultsContainer').hide();
+            })
+            .fail(function() {
+                alert('Errore durante la pulizia dei dati');
+            });
+    }
+}
+</script>
+{% endblock %}

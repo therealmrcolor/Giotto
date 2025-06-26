@@ -1,0 +1,1106 @@
+{% extends "base.html" %}
+
+{% block title %}Home - Sistema Ottimizzazione Colori{% endblock %}
+
+{% block extra_css %}
+<style>
+/* Stili per il modulo di aggiunta manuale */
+.color-code {
+    font-family: 'Courier New', monospace;
+    font-weight: bold;
+}
+
+#temporaryListContainer .table {
+    margin-bottom: 0;
+}
+
+#temporaryListContainer .table th {
+    background-color: #f8f9fa;
+    font-size: 0.85rem;
+    font-weight: 600;
+    border-bottom: 2px solid #dee2e6;
+}
+
+#temporaryListContainer .table td {
+    font-size: 0.9rem;
+    vertical-align: middle;
+}
+
+.cluster-badge {
+    font-size: 0.8rem;
+}
+
+/* Migliora la visualizzazione dei form */
+.form-label {
+    font-weight: 600;
+    font-size: 0.9rem;
+}
+
+.form-control, .form-select {
+    font-size: 0.9rem;
+}
+
+/* Stili per i badge di tipo colore */
+.badge {
+    font-size: 0.75rem;
+}
+
+/* Animazioni per la lista temporanea */
+#temporaryListContainer {
+    transition: all 0.3s ease;
+}
+
+/* Hover effects per i bottoni */
+.btn-outline-danger:hover {
+    transform: scale(1.05);
+    transition: transform 0.1s ease;
+}
+
+/* Migliora la leggibilità delle tabelle */
+.table-responsive {
+    border-radius: 0.375rem;
+    overflow: hidden;
+}
+
+.table-sm th,
+.table-sm td {
+    padding: 0.5rem;
+}
+
+/* Stili specifici per i placeholder */
+.form-control::placeholder {
+    color: #6c757d;
+    opacity: 0.8;
+}
+
+/* Miglioramenti per il JSON editor */
+.json-editor {
+    font-family: 'Courier New', monospace;
+    font-size: 0.85rem;
+    line-height: 1.4;
+}
+
+/* Badge colorati per i tipi di lunghezza */
+.badge.bg-primary {
+    background-color: #0d6efd !important;
+}
+
+.badge.bg-success {
+    background-color: #198754 !important;
+}
+
+/* Spacing migliorato per le card */
+.card {
+    border: 1px solid #dee2e6;
+    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+}
+
+.card-header {
+    border-bottom: 1px solid rgba(0, 0, 0, 0.125);
+}
+
+/* Stili per tabella input veloce */
+.bulk-input-table {
+    background-color: #f8f9fa;
+}
+
+.bulk-input-table thead {
+    background-color: #e9ecef;
+}
+
+.bulk-input-table .form-control {
+    border: 1px solid #ced4da;
+    border-radius: 0.375rem;
+    padding: 0.375rem 0.75rem;
+    font-size: 0.875rem;
+}
+
+.bulk-input-table .form-control:focus {
+    border-color: #0d6efd;
+    box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25);
+}
+
+.bulk-input-table .form-select {
+    border: 1px solid #ced4da;
+    border-radius: 0.375rem;
+    padding: 0.375rem 0.75rem;
+    font-size: 0.875rem;
+}
+
+.bulk-input-table .btn-sm {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.75rem;
+}
+
+.bulk-input-table tr:hover {
+    background-color: #f1f3f4;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <h1 class="h2 mb-4">
+            <i class="fas fa-palette me-2 text-primary"></i>
+            Sistema Ottimizzazione Colori
+        </h1>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Form Input Colori -->
+    <div class="col-lg-8">
+        <!-- Input Veloce Colori -->
+        <div class="card mb-4">
+            <div class="card-header bg-success text-white">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-bolt me-2"></i>
+                    Input Veloce Colori
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row mb-3">
+                    <div class="col-md-4">
+                        <label for="bulkLengthSelect" class="form-label">Lunghezza/Cabina</label>
+                        <select class="form-select" id="bulkLengthSelect" onchange="handleLengthChange()">
+                            <option value="corto">Corto (Cabina 1)</option>
+                            <option value="lungo">Lungo (Cabina 2)</option>
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <label for="bulkStartCluster" class="form-label">Cluster di Partenza</label>
+                        <select class="form-select" id="bulkStartCluster">
+                            <option value="">-- Automatico --</option>
+                            <option value="Bianco">Bianco</option>
+                            <option value="Nero">Nero</option>
+                            <option value="Rosso">Rosso</option>
+                            <option value="Blu">Blu</option>
+                            <option value="Verde">Verde</option>
+                            <option value="Giallo">Giallo</option>
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <label for="bulkFirstColor" class="form-label">Primo Colore (opzionale)</label>
+                        <input type="text" class="form-control" id="bulkFirstColor" placeholder="es. RAL9005">
+                        <div class="form-text">Primo colore del cluster</div>
+                    </div>
+                </div>
+                
+                <div class="row mb-3">
+                    <div class="col-md-12 d-flex align-items-end justify-content-end">
+                        <button type="button" class="btn btn-outline-primary me-2" onclick="addBulkRow()">
+                            <i class="fas fa-plus me-2"></i>Aggiungi Riga
+                        </button>
+                        <button type="button" class="btn btn-success me-2" onclick="processBulkInput()">
+                            <i class="fas fa-cogs me-2"></i><span class="btn-text-bulk">Ottimizza Colori</span>
+                            <span class="spinner-border spinner-border-sm d-none" role="status"></span>
+                        </button>
+                        <button type="button" class="btn btn-outline-secondary" onclick="clearBulkTable()">
+                            <i class="fas fa-broom me-2"></i>Pulisci Tabella
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="table-responsive">
+                    <table class="table table-bordered bulk-input-table">
+                        <thead>
+                            <tr>
+                                <th>Colore</th>
+                                <th>Tipologia</th>
+                                <th>Sequenza</th>
+                                <th>Azioni</th>
+                            </tr>
+                        </thead>
+                        <tbody id="bulkInputBody">
+                            <!-- Le righe verranno aggiunte dinamicamente -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Lista Temporanea -->
+        <div class="row mb-4" id="temporaryListContainer" style="display: none;">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header bg-warning text-dark">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-clock me-2"></i>
+                            Lista Colori da Ottimizzare
+                            <span class="badge bg-dark ms-2" id="temporaryCount">0</span>
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-sm">
+                                <thead>
+                                    <tr>
+                                        <th>Codice Colore</th>
+                                        <th>Tipo</th>
+                                        <th>Cluster</th>
+                                        <th>CH</th>
+                                        <th>Lunghezza</th>
+                                        <th>Seq</th>
+                                        <th>Tipo Seq</th>
+                                        <th>Azioni</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="temporaryListBody">
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Form Caricamento JSON -->
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-upload me-2"></i>
+                    Carica Lista Colori (JSON)
+                </h5>
+            </div>
+            <div class="card-body">
+                <form id="optimizationForm">
+                    <div class="mb-3">
+                        <label for="colorsJson" class="form-label">Lista Colori (formato JSON)</label>
+                        <textarea class="form-control json-editor" id="colorsJson" name="colorsJson" rows="8" placeholder='[
+  {
+    "code": "RAL9005",
+    "type": "R",
+    "sequence": 1,
+    "lunghezza_ordine": "corto",
+    "CH": 25.5
+  },
+  {
+    "code": "RAL1013",
+    "type": "F",
+    "sequence": 2,
+    "lunghezza_ordine": "lungo",
+    "CH": 30.2
+  }
+]'></textarea>
+                        <div class="form-text">
+                            Inserisci la lista colori in formato JSON. Ogni colore deve avere almeno i campi: code, type, lunghezza_ordine.
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="startCluster" class="form-label">Cluster di Partenza (opzionale)</label>
+                        <select class="form-select" id="startCluster" name="startCluster">
+                            <option value="">-- Automatico --</option>
+                            <option value="Bianco">Bianco</option>
+                            <option value="Nero">Nero</option>
+                            <option value="Rosso">Rosso</option>
+                            <option value="Blu">Blu</option>
+                            <option value="Verde">Verde</option>
+                            <option value="Giallo">Giallo</option>
+                        </select>
+                        <div class="form-text">
+                            Se non specificato, il sistema determinerà automaticamente il cluster di partenza ottimale.
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="firstColor" class="form-label">Primo Colore del Cluster (opzionale)</label>
+                        <input type="text" class="form-control" id="firstColor" name="firstColor" placeholder="es. RAL9005">
+                        <div class="form-text">
+                            Specifica il primo colore con cui iniziare il cluster. Deve essere presente nella lista colori.
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <button type="button" class="btn btn-outline-secondary w-100 mb-2" onclick="loadExampleJson()">
+                                <i class="fas fa-file-import me-2"></i>
+                                Carica JSON di Esempio
+                            </button>
+                        </div>
+                        <div class="col-md-6">
+                            <button type="submit" class="btn btn-primary w-100 mb-2">
+                                <i class="fas fa-cogs me-2"></i>
+                                <span class="btn-text">Ottimizza da JSON</span>
+                                <span class="spinner-border spinner-border-sm d-none" role="status">
+                                    <span class="visually-hidden">Loading...</span>
+                                </span>
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Stato Cabine -->
+    <div class="col-lg-4">
+        <div class="card">
+            <div class="card-header bg-info text-white">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-tachometer-alt me-2"></i>
+                    Stato Cabine
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="cabin-status" id="cabinStatus">
+                    <div class="row">
+                        <div class="col-12 mb-3">
+                            <div class="card cabin-card bg-light">
+                                <div class="card-body">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <div>
+                                            <h6 class="card-title mb-1">
+                                                <i class="fas fa-industry me-2 text-primary"></i>
+                                                Cabina 1 (Corto)
+                                            </h6>
+                                            <p class="card-text small text-muted mb-1">
+                                                <span id="cabin1-total">0</span> colori totali
+                                            </p>
+                                            <p class="card-text small text-muted mb-0">
+                                                In esecuzione: <span id="cabin1-executing">0</span> | 
+                                                Completati: <span id="cabin1-completed">0</span>
+                                            </p>
+                                        </div>
+                                        <a href="{{ url_for('cabin_view', cabin_id=1) }}" class="btn btn-outline-primary btn-sm">
+                                            Visualizza
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-12">
+                            <div class="card cabin-card bg-light">
+                                <div class="card-body">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <div>
+                                            <h6 class="card-title mb-1">
+                                                <i class="fas fa-industry me-2 text-success"></i>
+                                                Cabina 2 (Lungo)
+                                            </h6>
+                                            <p class="card-text small text-muted mb-1">
+                                                <span id="cabin2-total">0</span> colori totali
+                                            </p>
+                                            <p class="card-text small text-muted mb-0">
+                                                In esecuzione: <span id="cabin2-executing">0</span> | 
+                                                Completati: <span id="cabin2-completed">0</span>
+                                            </p>
+                                        </div>
+                                        <a href="{{ url_for('cabin_view', cabin_id=2) }}" class="btn btn-outline-success btn-sm">
+                                            Visualizza
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Azioni Rapide -->
+        <div class="card mt-3">
+            <div class="card-header bg-secondary text-white">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-bolt me-2"></i>
+                    Azioni Rapide
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    <button type="button" class="btn btn-outline-info btn-sm" onclick="refreshCabinStatus()">
+                        <i class="fas fa-sync-alt me-2"></i>
+                        Aggiorna Stato Cabine
+                    </button>
+                    <button type="button" class="btn btn-outline-warning btn-sm" onclick="clearAllData()">
+                        <i class="fas fa-trash-alt me-2"></i>
+                        Pulisci Tutte le Liste
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Risultati Ottimizzazione -->
+<div class="row mt-4" id="resultsContainer" style="display: none;">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header bg-success text-white">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-check-circle me-2"></i>
+                        Risultati Ottimizzazione
+                    </h5>
+                    <button type="button" class="btn btn-light btn-sm" onclick="exportToExcel()" id="exportButton" style="display: none;">
+                        <i class="fas fa-file-excel me-2"></i>
+                        Esporta Excel
+                    </button>
+                </div>
+            </div>
+            <div class="card-body">
+                <div id="optimizationResults">
+                    <!-- I risultati verranno inseriti qui via JavaScript -->
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<!-- SheetJS per esportazione Excel -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
+<script>
+// Variabili globali per i clusters disponibili e la lista temporanea
+let availableClusters = [];
+let temporaryList = [];
+let lastOptimizationResults = null; // Per esportazione Excel
+
+// Carica i clusters disponibili al caricamento della pagina
+$(document).ready(function() {
+    loadAvailableClusters();
+    refreshCabinStatus();
+});
+
+// Carica la lista dei clusters disponibili
+function loadAvailableClusters() {
+    $.get('/api/clusters')
+        .done(function(data) {
+            availableClusters = data.clusters || [];
+            const startSelect = $('#startCluster');
+            const clusterSelect = $('#colorCluster');
+            
+            // Popola select cluster di partenza
+            startSelect.empty();
+            startSelect.append('<option value="">-- Seleziona cluster di partenza --</option>');
+            availableClusters.forEach(cluster => {
+                startSelect.append(`<option value="${cluster}">${cluster}</option>`);
+            });
+            
+            // Popola select cluster per aggiunta manuale
+            clusterSelect.empty();
+            clusterSelect.append('<option value="">Auto-determina</option>');
+            availableClusters.forEach(cluster => {
+                clusterSelect.append(`<option value="${cluster}">${cluster}</option>`);
+            });
+        })
+        .fail(function() {
+            console.warn('Impossibile caricare i clusters disponibili');
+        });
+}
+
+// === FUNZIONI PER AGGIUNTA MANUALE ===
+
+// Aggiorna visualizzazione lista temporanea
+function updateTemporaryListDisplay() {
+    const container = $('#temporaryListContainer');
+    const tbody = $('#temporaryListBody');
+    const count = $('#temporaryCount');
+    
+    if (temporaryList.length === 0) {
+        container.hide();
+        return;
+    }
+    
+    container.show();
+    count.text(temporaryList.length);
+    tbody.empty();
+    
+    temporaryList.forEach((color, index) => {
+        const row = $(`
+            <tr>
+                <td><span class="color-code">${color.code}</span></td>
+                <td><span class="badge bg-secondary">${color.type}</span></td>
+                <td>${color.cluster || 'Auto'}</td>
+                <td>${color.CH || 'N/D'}</td>
+                <td><span class="badge ${color.lunghezza_ordine === 'lungo' ? 'bg-success' : 'bg-primary'}">${color.lunghezza_ordine}</span></td>
+                <td>${color.sequence || 'N/D'}</td>
+                <td>${color.sequence_type || 'N/D'}</td>
+                <td>
+                    <button class="btn btn-sm btn-outline-danger" onclick="removeFromTemporary(${color.temp_id})">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </td>
+            </tr>
+        `);
+        tbody.append(row);
+    });
+}
+
+// Rimuovi dalla lista temporanea
+function removeFromTemporary(tempId) {
+    temporaryList = temporaryList.filter(c => c.temp_id !== tempId);
+    updateTemporaryListDisplay();
+}
+
+// Pulisci lista temporanea
+function clearTemporaryList() {
+    temporaryList = [];
+    updateTemporaryListDisplay();
+}
+
+// Pulisci lista temporanea
+function clearTemporaryList() {
+    temporaryList = [];
+    updateTemporaryListDisplay();
+}
+
+// Carica JSON di esempio
+function loadExampleJson() {
+    const exampleJson = [
+        {"code": "RAL7048", "type": "E", "CH": 1.5, "lunghezza_ordine": "corto"},
+        {"code": "RAL7044", "type": "E", "CH": 2.0, "lunghezza_ordine": "corto"},
+        {"code": "RAL5017", "type": "K", "CH": 3.2, "lunghezza_ordine": "lungo"},
+        {"code": "69115038", "type": "R", "CH": 1.8, "lunghezza_ordine": "corto"},
+        {"code": "RAL1019", "type": "RE", "CH": 2.5, "lunghezza_ordine": "lungo"},
+        {"code": "160024", "type": "F", "CH": 4.1, "lunghezza_ordine": "lungo"},
+        {"code": "20889000", "type": "E", "CH": 1.2, "lunghezza_ordine": "corto"},
+        {"code": "54864032", "type": "K", "CH": 3.8, "lunghezza_ordine": "lungo"},
+        {"code": "RAL9023", "type": "E", "CH": 2.1, "lunghezza_ordine": "corto"},
+        {"code": "RAL9006", "type": "E", "CH": 2.3, "lunghezza_ordine": "lungo"},
+        {"code": "RAL9007", "type": "E", "CH": 2.7, "lunghezza_ordine": "lungo"},
+        {"code": "RAL9001", "type": "E", "CH": 1.9, "lunghezza_ordine": "corto"},
+        {"code": "160058", "type": "K", "CH": 3.5, "lunghezza_ordine": "lungo"},
+        {"code": "160000", "type": "K", "CH": 3.6, "lunghezza_ordine": "lungo"},
+        {"code": "52546000", "type": "E", "CH": 1.7, "lunghezza_ordine": "corto"},
+        {"code": "38399000", "type": "RE", "CH": 2.8, "lunghezza_ordine": "lungo"},
+        {"code": "47177000", "type": "K", "CH": 3.1, "lunghezza_ordine": "lungo"},
+        {"code": "RAL7024", "type": "K", "CH": 3.0, "lunghezza_ordine": "lungo"},
+        {"code": "RAL7015", "type": "F", "CH": 4.0, "lunghezza_ordine": "lungo"},
+        {"code": "RAL7011", "type": "K", "CH": 3.3, "lunghezza_ordine": "lungo"},
+        {"code": "RAL8019", "type": "K", "CH": 3.4, "lunghezza_ordine": "lungo"},
+        {"code": "RAL9006", "type": "K", "CH": 3.7, "lunghezza_ordine": "lungo"},
+        {"code": "RAL9007", "type": "K", "CH": 3.9, "lunghezza_ordine": "lungo"},
+        {"code": "RAL9023", "type": "K", "CH": 2.2, "lunghezza_ordine": "lungo"},
+        {"code": "RAL9005", "type": "F", "CH": 4.2, "lunghezza_ordine": "lungo"},
+        {"code": "RAL9007", "type": "F", "CH": 4.3, "lunghezza_ordine": "lungo"},
+        {"code": "RAL7035", "type": "F", "CH": 4.4, "lunghezza_ordine": "lungo"},
+        {"code": "RAL3020", "type": "F", "CH": 4.5, "lunghezza_ordine": "lungo"},
+        {"code": "RAL9003", "type": "K", "CH": 3.0, "lunghezza_ordine": "lungo"},
+        {"code": "RAL7045", "type": "K", "CH": 3.1, "lunghezza_ordine": "lungo"},
+        {"code": "RAL7032", "type": "E", "CH": 2.6, "lunghezza_ordine": "corto"},
+        {"code": "RAL7030", "type": "E", "CH": 2.4, "lunghezza_ordine": "corto"},
+        {"code": "RAL1013", "type": "RE", "CH": 2.9, "lunghezza_ordine": "lungo"},
+        {"code": "RAL1015", "type": "RE", "CH": 2.7, "lunghezza_ordine": "lungo"},
+        {"code": "RAL1017", "type": "RE", "CH": 2.6, "lunghezza_ordine": "lungo"},
+        {"code": "RAL2004", "type": "F", "CH": 4.6, "lunghezza_ordine": "lungo"},
+        {"code": "RAL3000", "type": "F", "CH": 4.7, "lunghezza_ordine": "lungo"},
+        {"code": "RAL4001", "type": "F", "CH": 4.8, "lunghezza_ordine": "lungo"},
+        {"code": "RAL5002", "type": "K", "CH": 3.2, "lunghezza_ordine": "lungo"},
+        {"code": "RAL6005", "type": "K", "CH": 3.3, "lunghezza_ordine": "lungo"},
+        {"code": "RAL7001", "type": "E", "CH": 2.5, "lunghezza_ordine": "corto"},
+        {"code": "RAL8003", "type": "E", "CH": 2.8, "lunghezza_ordine": "corto"}
+    ];
+    $('#colorsJson').val(JSON.stringify(exampleJson, null, 2));
+}
+
+// Gestione form ottimizzazione
+$('#optimizationForm').on('submit', function(e) {
+    e.preventDefault();
+    
+    const colorsJsonText = $('#colorsJson').val().trim();
+    const startCluster = $('#startCluster').val();
+    const firstColor = $('#firstColor').val().trim();
+    
+    if (!colorsJsonText) {
+        alert('Inserisci la lista colori in formato JSON');
+        return;
+    }
+    
+    let colorsData;
+    try {
+        colorsData = JSON.parse(colorsJsonText);
+    } catch (error) {
+        alert('Formato JSON non valido: ' + error.message);
+        return;
+    }
+    
+    if (!Array.isArray(colorsData) || colorsData.length === 0) {
+        alert('La lista colori deve essere un array non vuoto');
+        return;
+    }
+    
+    // Verifica che il primo colore sia presente nella lista se specificato
+    if (firstColor && !colorsData.some(c => c.code === firstColor)) {
+        alert(`Il primo colore "${firstColor}" deve essere presente nella lista colori.`);
+        return;
+    }
+    
+    // Mostra spinner
+    const btnText = $('.btn-text');
+    const spinner = $('.spinner-border');
+    btnText.addClass('d-none');
+    spinner.removeClass('d-none');
+    $('button[type="submit"]').prop('disabled', true);
+    
+    // Prepara i dati per l'API
+    const requestData = {
+        colors_today: colorsData,
+        start_cluster_name: startCluster || null,
+        first_color: firstColor || null
+    };
+    
+    // Debug: Log dei dati inviati
+    console.log('DEBUG: Dati inviati al backend:', requestData);
+    console.log('DEBUG: startCluster:', startCluster, typeof startCluster);
+    console.log('DEBUG: firstColor:', firstColor, typeof firstColor);
+    console.log('DEBUG: firstColor dopo trim:', firstColor ? firstColor.trim() : 'empty');
+    console.log('DEBUG: firstColor nel requestData:', requestData.first_color);
+    
+    // Verifica se il primo colore è nella lista
+    if (firstColor) {
+        const foundColor = colorsData.find(c => c.code === firstColor);
+        if (foundColor) {
+            console.log('DEBUG: firstColor trovato nella lista:', foundColor);
+        } else {
+            console.log('DEBUG: firstColor NON trovato nella lista colori!');
+            console.log('DEBUG: colori disponibili:', colorsData.map(c => c.code));
+        }
+    }
+    
+    // Chiama l'API di ottimizzazione
+    $.ajax({
+        url: '/api/optimize',
+        method: 'POST',
+        contentType: 'application/json',
+        data: JSON.stringify(requestData),
+        timeout: 60000, // 60 secondi timeout
+        success: function(response) {
+            displayOptimizationResults(response);
+            refreshCabinStatus();
+            $('#resultsContainer').show();
+        },
+        error: function(xhr, status, error) {
+            let errorMessage = 'Errore durante l\'ottimizzazione';
+            if (xhr.responseJSON && xhr.responseJSON.detail) {
+                errorMessage = xhr.responseJSON.detail;
+            } else if (status === 'timeout') {
+                errorMessage = 'Timeout: l\'ottimizzazione sta richiedendo troppo tempo';
+            }
+            alert(errorMessage);
+        },
+        complete: function() {
+            // Nascondi spinner
+            btnText.removeClass('d-none');
+            spinner.addClass('d-none');
+            $('button[type="submit"]').prop('disabled', false);
+        }
+    });
+});
+
+// Visualizza risultati ottimizzazione
+function displayOptimizationResults(results) {
+    // Salva i risultati per l'esportazione Excel
+    lastOptimizationResults = results;
+    
+    const container = $('#optimizationResults');
+    container.empty();
+    
+    if (results.cabina_1 && results.cabina_2) {
+        // Risultati per cabine separate
+        container.append(`
+            <div class="alert alert-info">
+                <h6><i class="fas fa-info-circle me-2"></i>Ottimizzazione completata per entrambe le cabine</h6>
+                <p class="mb-0">${results.message}</p>
+            </div>
+        `);
+        
+        if (results.cabina_1.ordered_colors && results.cabina_1.ordered_colors.length > 0) {
+            container.append(`
+                <div class="alert alert-success">
+                    <h6><i class="fas fa-industry me-2"></i>Cabina 1 (Corto)</h6>
+                    <p class="mb-1"><strong>Colori ottimizzati:</strong> ${results.cabina_1.ordered_colors.length}</p>
+                    <p class="mb-1"><strong>Sequenza cluster:</strong> ${results.cabina_1.optimal_cluster_sequence.join(' → ')}</p>
+                    <p class="mb-0"><strong>Costo calcolato:</strong> ${results.cabina_1.calculated_cost}</p>
+                </div>
+            `);
+        }
+        
+        if (results.cabina_2.ordered_colors && results.cabina_2.ordered_colors.length > 0) {
+            container.append(`
+                <div class="alert alert-success">
+                    <h6><i class="fas fa-industry me-2"></i>Cabina 2 (Lungo)</h6>
+                    <p class="mb-1"><strong>Colori ottimizzati:</strong> ${results.cabina_2.ordered_colors.length}</p>
+                    <p class="mb-1"><strong>Sequenza cluster:</strong> ${results.cabina_2.optimal_cluster_sequence.join(' → ')}</p>
+                    <p class="mb-0"><strong>Costo calcolato:</strong> ${results.cabina_2.calculated_cost}</p>
+                </div>
+            `);
+        }
+    } else {
+        // Risultati standard
+        container.append(`
+            <div class="alert alert-success">
+                <h6><i class="fas fa-check-circle me-2"></i>Ottimizzazione completata</h6>
+                <p class="mb-1"><strong>Colori ottimizzati:</strong> ${results.ordered_colors.length}</p>
+                <p class="mb-1"><strong>Sequenza cluster:</strong> ${results.optimal_cluster_sequence.join(' → ')}</p>
+                <p class="mb-1"><strong>Costo calcolato:</strong> ${results.calculated_cost}</p>
+                <p class="mb-0">${results.message}</p>
+            </div>
+        `);
+    }
+    
+    container.append(`
+        <div class="text-center mt-3">
+            <a href="${window.location.origin}/cabin/1" class="btn btn-primary me-2">
+                <i class="fas fa-eye me-2"></i>Visualizza Cabina 1
+            </a>
+            <a href="${window.location.origin}/cabin/2" class="btn btn-success">
+                <i class="fas fa-eye me-2"></i>Visualizza Cabina 2
+            </a>
+        </div>
+    `);
+    
+    // Mostra il pulsante di esportazione Excel
+    $('#exportButton').show();
+}
+
+// Aggiorna stato cabine
+function refreshCabinStatus() {
+    $.get('/api/cabin-status')
+        .done(function(data) {
+            if (data.cabin_1) {
+                $('#cabin1-total').text(data.cabin_1.total || 0);
+                $('#cabin1-executing').text(data.cabin_1.executing || 0);
+                $('#cabin1-completed').text(data.cabin_1.completed || 0);
+            }
+            
+            if (data.cabin_2) {
+                $('#cabin2-total').text(data.cabin_2.total || 0);
+                $('#cabin2-executing').text(data.cabin_2.executing || 0);
+                $('#cabin2-completed').text(data.cabin_2.completed || 0);
+            }
+        })
+        .fail(function() {
+            console.warn('Impossibile aggiornare lo stato delle cabine');
+        });
+}
+
+// Pulisci tutti i dati
+function clearAllData() {
+    if (confirm('Sei sicuro di voler pulire tutte le liste delle cabine? Questa operazione non può essere annullata.')) {
+        $.post('/api/clear-all')
+            .done(function() {
+                alert('Tutte le liste sono state pulite con successo');
+                refreshCabinStatus();
+                $('#resultsContainer').hide();
+            })
+            .fail(function() {
+                alert('Errore durante la pulizia dei dati');
+            });
+    }
+}
+
+// === FUNZIONI PER INPUT VELOCE COLORI ===
+
+let bulkRowCounter = 0;
+
+// Inizializza tabella bulk con una riga vuota
+function initBulkTable() {
+    addBulkRow();
+}
+
+// Aggiungi una nuova riga alla tabella bulk
+function addBulkRow() {
+    bulkRowCounter++;
+    const tbody = $('#bulkInputBody');
+    const row = $(`
+        <tr id="bulkRow${bulkRowCounter}">
+            <td>
+                <input type="text" class="form-control" id="bulkColor${bulkRowCounter}" placeholder="es. RAL9005">
+            </td>
+            <td>
+                <select class="form-select" id="bulkType${bulkRowCounter}">
+                    <option value="">Seleziona</option>
+                    <option value="R">R - Reintegro Urgente</option>
+                    <option value="RE">RE - Reintegro</option>
+                    <option value="F">F - Fisso</option>
+                    <option value="K">K - Kit</option>
+                    <option value="E">E - Estetico</option>
+                </select>
+            </td>
+            <td>
+                <input type="number" class="form-control" id="bulkSequence${bulkRowCounter}" placeholder="1">
+            </td>
+            <td>
+                <button type="button" class="btn btn-sm btn-outline-danger" onclick="removeBulkRow(${bulkRowCounter})">
+                    <i class="fas fa-trash"></i>
+                </button>
+            </td>
+        </tr>
+    `);
+    tbody.append(row);
+}
+
+// Rimuovi una riga dalla tabella bulk
+function removeBulkRow(rowId) {
+    const tbody = $('#bulkInputBody');
+    $(`#bulkRow${rowId}`).remove();
+    
+    // Se non ci sono più righe, aggiungine una vuota
+    if (tbody.children().length === 0) {
+        addBulkRow();
+    }
+}
+
+// Pulisci la tabella bulk
+function clearBulkTable() {
+    $('#bulkInputBody').empty();
+    bulkRowCounter = 0;
+    addBulkRow();
+}
+
+// Processa tutti i colori inseriti nella tabella bulk e lancia l'ottimizzazione
+function processBulkInput() {
+    const tbody = $('#bulkInputBody');
+    const rows = tbody.find('tr');
+    const colors = [];
+    const selectedLength = $('#bulkLengthSelect').val();
+    const startCluster = $('#bulkStartCluster').val();
+    const firstColor = $('#bulkFirstColor').val().trim();
+    
+    rows.each(function() {
+        const rowId = $(this).attr('id');
+        if (!rowId) return;
+        
+        const rowNumber = rowId.replace('bulkRow', '');
+        const colorCode = $(`#bulkColor${rowNumber}`).val().trim();
+        const colorType = $(`#bulkType${rowNumber}`).val();
+        const colorSequence = $(`#bulkSequence${rowNumber}`).val();
+        
+        // Aggiungi solo righe con almeno codice e tipo compilati
+        if (colorCode && colorType) {
+            colors.push({
+                code: colorCode,
+                type: colorType,
+                lunghezza_ordine: selectedLength,
+                sequence: parseInt(colorSequence) || null,
+                CH: null
+            });
+        }
+    });
+    
+    if (colors.length === 0) {
+        alert('Nessun colore valido da processare. Compila almeno Codice Colore e Tipologia.');
+        return;
+    }
+    
+    // Verifica che il primo colore sia presente nella lista se specificato
+    if (firstColor && !colors.some(c => c.code === firstColor)) {
+        alert(`Il primo colore "${firstColor}" deve essere presente nella lista colori.`);
+        return;
+    }
+    
+    // Mostra loading
+    const btnText = $('.btn-text-bulk');
+    const spinner = $('.spinner-border');
+    const button = $('button:contains("Ottimizza Colori")');
+    
+    btnText.addClass('d-none');
+    spinner.removeClass('d-none');
+    button.prop('disabled', true);
+    
+    // Prepara i dati per l'API
+    const requestData = {
+        colors_today: colors,
+        start_cluster_name: startCluster || null,
+        first_color: firstColor || null
+    };
+    
+    // Chiama l'API di ottimizzazione
+    $.ajax({
+        url: '/api/optimize',
+        method: 'POST',
+        contentType: 'application/json',
+        data: JSON.stringify(requestData),
+        timeout: 60000, // 60 secondi timeout
+        success: function(response) {
+            displayOptimizationResults(response);
+            refreshCabinStatus();
+            $('#resultsContainer').show();
+            clearBulkTable(); // Pulisci la tabella dopo il successo
+            alert('Ottimizzazione completata con successo!');
+        },
+        error: function(xhr, status, error) {
+            let errorMessage = 'Errore durante l\'ottimizzazione';
+            if (xhr.responseJSON && xhr.responseJSON.detail) {
+                errorMessage = xhr.responseJSON.detail;
+            } else if (status === 'timeout') {
+                errorMessage = 'Timeout: l\'ottimizzazione sta richiedendo troppo tempo';
+            }
+            alert(errorMessage);
+        },
+        complete: function() {
+            // Nascondi spinner
+            btnText.removeClass('d-none');
+            spinner.addClass('d-none');
+            button.prop('disabled', false);
+        }
+    });
+}
+
+// Gestione cambio lunghezza per input veloce
+function handleLengthChange() {
+    const lengthSelect = document.getElementById('bulkLengthSelect');
+    const selectedLength = lengthSelect.value;
+    console.log('Lunghezza selezionata per input veloce:', selectedLength);
+}
+
+// === ESPORTAZIONE EXCEL ===
+
+// Esporta i risultati dell'ottimizzazione in formato Excel
+function exportToExcel() {
+    if (!lastOptimizationResults) {
+        alert('Nessun risultato di ottimizzazione da esportare');
+        return;
+    }
+    
+    // Prepara i dati per l'esportazione
+    const exportData = prepareExportData(lastOptimizationResults);
+    
+    if (exportData.length === 0) {
+        alert('Nessun dato da esportare');
+        return;
+    }
+    
+    // Crea il workbook
+    const wb = XLSX.utils.book_new();
+    const ws = XLSX.utils.aoa_to_sheet(exportData);
+    
+    // Aggiungi il worksheet al workbook
+    XLSX.utils.book_append_sheet(wb, ws, "Ottimizzazione Colori");
+    
+    // Genera il nome del file con timestamp
+    const now = new Date();
+    const filename = `ottimizzazione_colori_${now.getFullYear()}${(now.getMonth()+1).toString().padStart(2,'0')}${now.getDate().toString().padStart(2,'0')}_${now.getHours().toString().padStart(2,'0')}${now.getMinutes().toString().padStart(2,'0')}.xlsx`;
+    
+    // Scarica il file
+    XLSX.writeFile(wb, filename);
+}
+
+// Prepara i dati per l'esportazione nel formato richiesto
+function prepareExportData(results) {
+    // Header del file Excel
+    const data = [
+        ['Colore', 'SeqE', 'LineaE', 'TipoE', 'SeqK', 'LineaK', 'TipoK', 'SeqF', 'LineaF', 'TipoF']
+    ];
+    
+    // Raccoglie tutti i colori in ordine
+    let allColors = [];
+    
+    // Funzione helper per processare i colori di una cabina
+    function collectColors(colors) {
+        if (!colors || !Array.isArray(colors)) return;
+        
+        colors.forEach(color => {
+            allColors.push({
+                colorCode: color.color_code || color.code,
+                colorType: color.color_type || color.type,
+                sequence: color.final_sequence || color.sequence || ''
+            });
+        });
+    }
+    
+    // Processa i risultati in base al formato
+    if (results.cabina_1 && results.cabina_2) {
+        // Risultati per cabine separate
+        collectColors(results.cabina_1.ordered_colors);
+        collectColors(results.cabina_2.ordered_colors);
+    } else {
+        // Risultati standard
+        collectColors(results.ordered_colors);
+    }
+    
+    // Raggruppa solo colori consecutivi con lo stesso codice
+    const groups = [];
+    let currentGroup = null;
+    
+    allColors.forEach(color => {
+        const colorCode = color.colorCode;
+        const colorType = color.colorType;
+        const sequence = color.sequence;
+        
+        // Se è lo stesso colore E stesso tipo del gruppo corrente, aggiungilo
+        if (currentGroup && currentGroup.colorCode === colorCode && currentGroup.lastType === colorType) {
+            // Aggiungi alla categoria appropriata del gruppo corrente
+            if (colorType === 'E' || colorType === 'R' || colorType === 'RE') {
+                if (currentGroup.E.seq) {
+                    currentGroup.E.seq += ';' + sequence;
+                    currentGroup.E.tipo += ';' + colorType;
+                } else {
+                    currentGroup.E.seq = sequence;
+                    currentGroup.E.tipo = colorType;
+                }
+            } else if (colorType === 'K') {
+                if (currentGroup.K.seq) {
+                    currentGroup.K.seq += ';' + sequence;
+                    currentGroup.K.tipo += ';' + colorType;
+                } else {
+                    currentGroup.K.seq = sequence;
+                    currentGroup.K.tipo = colorType;
+                }
+            } else if (colorType === 'F') {
+                if (currentGroup.F.seq) {
+                    currentGroup.F.seq += ';' + sequence;
+                    currentGroup.F.tipo += ';' + colorType;
+                } else {
+                    currentGroup.F.seq = sequence;
+                    currentGroup.F.tipo = colorType;
+                }
+            }
+        } else {
+            // Colore diverso, tipo diverso, o primo colore: crea un nuovo gruppo
+            if (currentGroup) {
+                groups.push(currentGroup);
+            }
+            
+            currentGroup = {
+                colorCode: colorCode,
+                lastType: colorType, // Memorizza l'ultimo tipo per il confronto
+                E: { seq: '', tipo: '' },
+                K: { seq: '', tipo: '' },
+                F: { seq: '', tipo: '' }
+            };
+            
+            // Aggiungi il colore corrente al nuovo gruppo
+            if (colorType === 'E' || colorType === 'R' || colorType === 'RE') {
+                currentGroup.E.seq = sequence;
+                currentGroup.E.tipo = colorType;
+            } else if (colorType === 'K') {
+                currentGroup.K.seq = sequence;
+                currentGroup.K.tipo = colorType;
+            } else if (colorType === 'F') {
+                currentGroup.F.seq = sequence;
+                currentGroup.F.tipo = colorType;
+            }
+        }
+    });
+    
+    // Aggiungi l'ultimo gruppo
+    if (currentGroup) {
+        groups.push(currentGroup);
+    }
+    
+    // Converte i gruppi in righe per Excel
+    groups.forEach(group => {
+        const row = [
+            group.colorCode,
+            group.E.seq, '', group.E.tipo,  // Estetico/Reintegro
+            group.K.seq, '', group.K.tipo,  // Kit
+            group.F.seq, '', group.F.tipo   // Fisso
+        ];
+        data.push(row);
+    });
+    
+    return data;
+}
+
+// Inizializza la tabella bulk quando la pagina è pronta
+$(document).ready(function() {
+    initBulkTable();
+});
+</script>
+{% endblock %}

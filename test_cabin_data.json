@@ -1,0 +1,50 @@
+[
+    {
+        "code": "RAL7048",
+        "type": "E",
+        "CH": 1.5,
+        "lunghezza_ordine": "corto"
+    },
+    {
+        "code": "RAL7044",
+        "type": "E",
+        "CH": 2.0,
+        "lunghezza_ordine": "corto"
+    },
+    {
+        "code": "RAL5017",
+        "type": "K",
+        "CH": 3.2,
+        "lunghezza_ordine": "lungo"
+    },
+    {
+        "code": "69115038",
+        "type": "R",
+        "CH": 1.8,
+        "lunghezza_ordine": "corto"
+    },
+    {
+        "code": "RAL1019",
+        "type": "RE",
+        "CH": 2.5,
+        "lunghezza_ordine": "lungo"
+    },
+    {
+        "code": "160024",
+        "type": "F",
+        "CH": 4.1,
+        "lunghezza_ordine": "lungo"
+    },
+    {
+        "code": "20889000",
+        "type": "E",
+        "CH": 1.2,
+        "lunghezza_ordine": "corto"
+    },
+    {
+        "code": "54864032",
+        "type": "K",
+        "CH": 3.8,
+        "lunghezza_ordine": "lungo"
+    }
+]

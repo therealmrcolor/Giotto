@@ -1,0 +1,63 @@
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    ports:
+      - "8000:80" # Esponi API backend sulla porta 8000 dell'host
+    volumes:
+      # Monta il codice per sviluppo live-reload (grazie a uvicorn --reload)
+      - ./backend/app:/app/app
+      # Monta la cartella dati condivisa contenente il DB
+      - ./shared/data:/app/app/data
+    environment:
+      # Specifica il path del database per il backend
+      - DATABASE_PATH=/app/app/data/colors.db
+    # Non servono variabili d'ambiente specifiche qui (legge da config.py)
+    container_name: color-optimizer-backend # Nome container opzionale
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    ports:
+      - "8080:80" # Esponi frontend sulla porta 8080 dell'host
+    volumes:
+      # Monta codice per sviluppo (Flask con debug=True si riavvierà)
+      - ./frontend/app:/app/app
+      # Monta la stessa cartella dati condivisa del backend
+      - ./shared/data:/app/app/data
+    environment:
+      # Specifica l'URL del backend (usa il nome servizio 'backend')
+      - FASTAPI_BACKEND_URL=http://backend:80
+      # Specifica il path del database per il frontend
+      - DATABASE_PATH=/app/app/data/colors.db
+      # Imposta una chiave segreta migliore qui per Flask
+      - FLASK_SECRET_KEY=la-mia-chiave-segreta-molto-sicura-da-cambiare
+      # Abilita modalità debug Flask (utile per sviluppo)
+      - FLASK_DEBUG=1
+      - FLASK_ENV=development
+      - FLASK_APP=app.main:app
+      - PYTHONUNBUFFERED=1
+      - PYTHONDONTWRITEBYTECODE=1
+    command: >
+      flask run --host=0.0.0.0 --port=80 --debug
+    depends_on:
+      - backend # Assicura che il backend si avvii prima (o almeno tenti)
+    container_name: color-optimizer-frontend # Nome container opzionale
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+# Non servono network definiti esplicitamente, Compose ne crea uno di default
+
+volumes:
+  shared_data:
+    driver: local

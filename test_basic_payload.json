@@ -1,0 +1,8 @@
+{
+    "colors_today": [
+        {"code": "RAL1019", "type": "R", "lunghezza_ordine": "corto"},
+        {"code": "RAL1007", "type": "F", "lunghezza_ordine": "corto"}
+    ],
+    "start_cluster_name": "Bianco",
+    "prioritized_reintegrations": []
+}

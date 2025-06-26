@@ -1,0 +1,2002 @@
+{% extends "base.html" %}
+
+{% block title %}Cabina {{ cabin_id }} - Sistema Ottimizzazione Colori{% endblock %}
+
+{% block extra_css %}
+<style>
+/* Stili per drag & drop */
+.color-row {
+    cursor: move;
+    transition: all 0.2s ease;
+}
+
+.color-row:hover {
+    background-color: #f8f9fa;
+}
+
+.color-row.dragging {
+    opacity: 0.5;
+    transform: rotate(3deg);
+}
+
+.color-row.drag-over {
+    border-top: 3px solid #007bff;
+}
+
+/* Stili per i lucchetti */
+.lock-toggle {
+    border: none;
+    background: transparent;
+    font-size: 1.2rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.lock-toggle:hover {
+    transform: scale(1.1);
+}
+
+.lock-toggle.locked {
+    color: #dc3545;
+}
+
+.lock-toggle.unlocked {
+    color: #6c757d;
+}
+
+.lock-toggle.locked:hover {
+    color: #c82333;
+}
+
+.lock-toggle.unlocked:hover {
+    color: #28a745;
+}
+
+/* Stili per colori bloccati */
+.color-row.locked {
+    background-color: #fff3cd;
+    border-left: 4px solid #ffc107;
+}
+
+.color-row.locked .color-code {
+    font-weight: bold;
+}
+
+/* Drag handle */
+.drag-handle {
+    cursor: grab;
+    color: #6c757d;
+    font-size: 1.1rem;
+}
+
+.drag-handle:active {
+    cursor: grabbing;
+}
+
+.drag-handle:hover {
+    color: #495057;
+}
+
+/* Cluster lock button */
+.cluster-lock-btn {
+    font-size: 0.8rem;
+    padding: 0.25rem 0.5rem;
+    border-radius: 0.25rem;
+    border: 1px solid transparent;
+    background: transparent;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.cluster-lock-btn.locked {
+    background-color: #dc3545;
+    color: white;
+    border-color: #dc3545;
+}
+
+.cluster-lock-btn.unlocked {
+    background-color: #f8f9fa;
+    color: #6c757d;
+    border-color: #dee2e6;
+}
+
+.cluster-lock-btn:hover {
+    transform: scale(1.05);
+}
+
+/* Highlighting per cluster */
+.cluster-highlight {
+    background-color: #e3f2fd !important;
+    border-left: 4px solid #2196f3 !important;
+}
+
+/* Ottimizzazione e feedback */
+.optimization-buttons {
+    position: sticky;
+    bottom: 20px;
+    z-index: 1000;
+    background: white;
+    padding: 10px;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    border: 1px solid #dee2e6;
+}
+
+/* Stili per interfaccia cluster */
+.sortable-clusters {
+    min-height: 100px;
+}
+
+.cluster-order-item {
+    cursor: move;
+    transition: background-color 0.2s ease;
+    border: 1px solid #dee2e6;
+    margin-bottom: 2px;
+}
+
+.cluster-order-item:hover {
+    background-color: #f8f9fa;
+}
+
+.cluster-order-item.ui-sortable-helper {
+    background-color: #e3f2fd;
+    border-color: #2196f3;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+    transform: rotate(2deg);
+}
+
+.cluster-order-item .cluster-name {
+    font-weight: 500;
+    color: #495057;
+}
+
+.cluster-order-item .drag-handle {
+    color: #6c757d;
+    cursor: grab;
+}
+
+.cluster-order-item .drag-handle:hover {
+    color: #495057;
+}
+
+.lock-cluster-btn.locked {
+    background-color: #dc3545;
+    color: white;
+    border-color: #dc3545;
+}
+
+.lock-cluster-btn.unlocked {
+    background-color: #f8f9fa;
+    color: #6c757d;
+    border-color: #dee2e6;
+}
+
+.lock-cluster-btn:hover {
+    transform: scale(1.05);
+}
+
+/* Assicura che la tabella colori sia completamente visibile */
+#colorsTable {
+    height: auto !important;
+}
+
+.table-responsive {
+    max-height: none !important;
+    height: auto !important;
+    overflow-y: visible !important;
+}
+
+.card-body {
+    height: auto !important;
+    max-height: none !important;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1 class="h2 mb-0">
+                <i class="fas fa-industry me-2 {{ 'text-primary' if cabin_id == 1 else 'text-success' }}"></i>
+                Cabina {{ cabin_id }} - {{ 'Corto' if cabin_id == 1 else 'Lungo' }}
+            </h1>
+            <div>
+                <a href="{{ url_for('home') }}" class="btn btn-outline-secondary me-2">
+                    <i class="fas fa-arrow-left me-2"></i>Torna alla Home
+                </a>
+                <button class="btn btn-outline-info" onclick="refreshColorList()">
+                    <i class="fas fa-sync-alt me-2"></i>Aggiorna Lista
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Messaggio di sincronizzazione -->
+<div class="row mb-3">
+    <div class="col-12">
+        <div id="syncMessage" class="alert" style="display: none;"></div>
+    </div>
+</div>
+
+<!-- Statistiche Cabina -->
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card text-center">
+            <div class="card-body">
+                <h5 class="card-title text-primary" id="totalColors">0</h5>
+                <p class="card-text small text-muted">Colori Totali</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-center">
+            <div class="card-body">
+                <h5 class="card-title text-warning" id="executingColors">0</h5>
+                <p class="card-text small text-muted">In Esecuzione</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-center">
+            <div class="card-body">
+                <h5 class="card-title text-success" id="completedColors">0</h5>
+                <p class="card-text small text-muted">Completati</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-center">
+            <div class="card-body">
+                <h5 class="card-title text-secondary" id="pendingColors">0</h5>
+                <p class="card-text small text-muted">Da Fare</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Form Aggiunta Colore -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header bg-info text-white">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-plus me-2"></i>
+                    Aggiungi Nuovo Colore
+                </h5>
+            </div>
+            <div class="card-body">
+                <form id="addColorForm">
+                    <div class="row">
+                        <div class="col-md-2">
+                            <label for="colorCode" class="form-label">Codice Colore</label>
+                            <input type="text" class="form-control" id="colorCode" name="colorCode" required placeholder="es. RAL9005">
+                        </div>
+                        <div class="col-md-2">
+                            <label for="colorType" class="form-label">Tipo</label>
+                            <select class="form-select" id="colorType" name="colorType" required>
+                                <option value="">Seleziona</option>
+                                <option value="R">R - Reintegro Urgente</option>
+                                <option value="RE">RE - Reintegro</option>
+                                <option value="F">F - Fisso</option>
+                                <option value="K">K - Kit</option>
+                                <option value="E">E - Estetico</option>
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <label for="colorCluster" class="form-label">Cluster</label>
+                            <select class="form-select" id="colorCluster" name="colorCluster">
+                                <option value="">Auto-determina</option>
+                            </select>
+                        </div>
+                        <div class="col-md-1">
+                            <label for="colorCH" class="form-label">CH</label>
+                            <input type="number" step="0.1" class="form-control" id="colorCH" name="colorCH" placeholder="25.5">
+                        </div>
+                        <div class="col-md-2">
+                            <label for="colorLength" class="form-label">Lunghezza</label>
+                            <select class="form-select" id="colorLength" name="colorLength" required>
+                                <option value="{{ 'corto' if cabin_id == 1 else 'lungo' }}" selected>{{ 'Corto' if cabin_id == 1 else 'Lungo' }}</option>
+                            </select>
+                        </div>
+                        <div class="col-md-1">
+                            <label for="colorSequence" class="form-label">Seq Input</label>
+                            <input type="number" class="form-control" id="colorSequence" name="colorSequence" placeholder="1">
+                        </div>
+                        <div class="col-md-2">
+                            <label for="colorSequenceType" class="form-label">Tipo Seq</label>
+                            <select class="form-select" id="colorSequenceType" name="colorSequenceType">
+                                <option value="">Nessuno</option>
+                                <option value="piccola">Piccola</option>
+                                <option value="successiva">Successiva</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="row mt-3">
+                        <div class="col-12">
+                            <button type="button" class="btn btn-secondary me-2" onclick="addToTemporaryList()">
+                                <i class="fas fa-plus me-2"></i>Aggiungi a Lista Temporanea
+                            </button>
+                            <button type="button" class="btn btn-primary me-2" onclick="addAndOptimize()">
+                                <i class="fas fa-cogs me-2"></i>Aggiorna e Ricalcola
+                            </button>
+                            <button type="button" class="btn btn-warning" onclick="clearTemporaryList()">
+                                <i class="fas fa-trash me-2"></i>Pulisci Lista Temporanea
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Lista Temporanea -->
+<div class="row mb-4" id="temporaryListContainer" style="display: none;">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header bg-warning text-dark">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-clock me-2"></i>
+                    Lista Temporanea
+                    <span class="badge bg-dark ms-2" id="temporaryCount">0</span>
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-sm">
+                        <thead>
+                            <tr>
+                                <th>Codice Colore</th>
+                                <th>Tipo</th>
+                                <th>Cluster</th>
+                                <th>CH</th>
+                                <th>Lunghezza</th>
+                                <th>Seq Input</th>
+                                <th>Tipo Seq</th>
+                                <th>Azioni</th>
+                            </tr>
+                        </thead>
+                        <tbody id="temporaryListBody">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Lista Colori Cabina -->
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header {{ 'bg-primary' if cabin_id == 1 else 'bg-success' }} text-white">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-list me-2"></i>
+                        Lista Colori Ottimizzata
+                    </h5>
+                    <button type="button" class="btn btn-light btn-sm" onclick="exportCabinToExcel()" id="exportCabinButton">
+                        <i class="fas fa-file-excel me-2"></i>
+                        Esporta Excel
+                    </button>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive" style="max-height: none; overflow-y: visible;">
+                    <table class="table table-hover" id="colorsTable">
+                        <thead class="table-light">
+                            <tr>
+                                <th><i class="fas fa-grip-vertical"></i></th>
+                                <th>Index</th>
+                                <th>Codice Colore</th>
+                                <th>Tipo</th>
+                                <th>Cluster</th>
+                                <th>CH</th>
+                                <th>Lunghezza</th>
+                                <th>Seq Input</th>
+                                <th>Tipo Seq</th>
+                                <th><i class="fas fa-lock"></i> Bloccato</th>
+                                <th>In Esecuzione</th>
+                                <th>Completato</th>
+                                <th>Azioni</th>
+                            </tr>
+                        </thead>
+                        <tbody id="colorsTableBody">
+                            <!-- I colori verranno inseriti qui via JavaScript -->
+                        </tbody>
+                    </table>
+                </div>
+                
+                <div id="emptyState" class="text-center py-5" style="display: none;">
+                    <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
+                    <h5 class="text-muted">Nessun colore presente</h5>
+                    <p class="text-muted">Aggiungi colori utilizzando il form sopra o esegui un'ottimizzazione dalla home page.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Pannello Ordinamento Cluster -->
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="mb-1">
+                            <i class="fas fa-layer-group me-2"></i>
+                            Ordinamento Cluster
+                        </h6>
+                        <small class="text-muted">Imposta l'ordine preferito dei cluster per l'ottimizzazione</small>
+                    </div>
+                    <div>
+                        <button class="btn btn-sm btn-outline-primary" onclick="optimizeClusterSequence()" id="optimizeClusterBtn">
+                            <i class="fas fa-sort me-2"></i>
+                            <span class="btn-text">Applica Ordine</span>
+                            <span class="spinner-border spinner-border-sm ms-2 d-none" role="status"></span>
+                        </button>
+                        <button class="btn btn-sm btn-outline-secondary" onclick="resetClusterOrder()">
+                            <i class="fas fa-undo me-2"></i>
+                            Reset
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6>Ordine Cluster</h6>
+                        <div id="emptyClusterState" class="text-center py-3 text-muted d-none">
+                            <i class="fas fa-layer-group fa-2x mb-2"></i>
+                            <p>Nessun cluster disponibile</p>
+                        </div>
+                        <ul id="clusterOrderList" class="list-group sortable-clusters">
+                            <!-- I cluster verranno popolati dinamicamente -->
+                        </ul>
+                    </div>
+                    <div class="col-md-6">
+                        <h6>Informazioni</h6>
+                        <div class="alert alert-info">
+                            <small>
+                                <strong>Come usare:</strong><br>
+                                1. Trascina i cluster per riordinarli<br>
+                                2. Usa i lucchetti per bloccare le posizioni<br>
+                                3. Clicca "Applica Ordine" per riorganizzare i colori<br>
+                                4. Usa le funzioni di blocco singoli colori per ottimizzazioni fini
+                            </small>
+                        </div>
+                        <div id="clusterStats" class="mt-3">
+                            <small class="text-muted">Statistiche cluster verranno mostrate qui</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Pannello Ottimizzazione con Blocchi -->
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="optimization-buttons">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h6 class="mb-1">
+                        <i class="fas fa-cogs me-2"></i>
+                        Ottimizzazione Avanzata
+                    </h6>
+                    <small class="text-muted">Riordina colori rispettando i blocchi impostati</small>
+                </div>
+                <div>
+                    <button class="btn btn-warning me-2" onclick="optimizeWithLocks()" id="optimizeWithLocksBtn">
+                        <i class="fas fa-lock me-2"></i>
+                        <span class="btn-text">Ottimizza con Blocchi</span>
+                        <span class="spinner-border spinner-border-sm ms-2 d-none" role="status"></span>
+                    </button>
+                    <button class="btn btn-outline-secondary me-2" onclick="clearAllLocks()">
+                        <i class="fas fa-unlock me-2"></i>
+                        Sblocca Tutto
+                    </button>
+                    <button class="btn btn-outline-info" onclick="showLockInfo()">
+                        <i class="fas fa-info-circle"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<!-- jQuery UI for sortable functionality -->
+<script src="https://code.jquery.com/ui/1.13.2/jquery-ui.min.js"></script>
+<link rel="stylesheet" href="https://code.jquery.com/ui/1.13.2/themes/ui-lightness/jquery-ui.css">
+
+<!-- SheetJS per esportazione Excel -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
+<script>
+// Variabili globali
+const cabinId = {{ cabin_id }};
+let colorsList = [];
+let temporaryList = [];
+let clusterOrder = [];
+
+// Carica dati al caricamento della pagina
+$(document).ready(function() {
+    loadColorsList();
+    loadClusterOrder();
+});
+
+// Carica lista colori della cabina
+function loadColorsList() {
+    $.get(`/api/cabin/${cabinId}/colors`)
+        .done(function(data) {
+            colorsList = data.colors || [];
+            updateColorsTable();
+            updateStatistics();
+            
+            // Sincronizza automaticamente l'ordine dei cluster dopo l'aggiornamento
+            syncClusterOrderWithColors();
+        })
+        .fail(function() {
+            console.error('Errore durante il caricamento della lista colori');
+        });
+}
+
+// Carica ordine cluster
+function loadClusterOrder() {
+    $.get(`/api/cabin/${cabinId}/cluster_order`)
+        .done(function(data) {
+            clusterOrder = data.order || [];
+            updateClusterOrderDisplay();
+            
+            // Inizializza drag and drop dopo aver caricato i cluster
+            setTimeout(() => {
+                initSortable();
+            }, 100);
+        })
+        .fail(function() {
+            console.error('Errore durante il caricamento dell\'ordine dei cluster');
+            // Se non c'è un ordine salvato, usa i cluster dai colori esistenti
+            syncClusterOrderWithColors();
+        });
+}
+
+// Sincronizza l'ordine dei cluster con i colori presenti
+function syncClusterOrderWithColors() {
+    console.log('=== INIZIO SINCRONIZZAZIONE CLUSTER ===');
+    console.log('colorsList attuale:', colorsList);
+    console.log('clusterOrder prima della sincronizzazione:', clusterOrder);
+    
+    // Ottieni cluster unici dai colori attuali
+    const clustersFromColors = [...new Set(colorsList.map(c => c.cluster).filter(c => c))];
+    console.log('Cluster trovati dai colori:', clustersFromColors);
+    
+    // Se non ci sono colori, svuota l'ordine cluster
+    if (clustersFromColors.length === 0) {
+        console.log('Nessun cluster nei colori, svuotando ordine cluster');
+        clusterOrder = [];
+        updateClusterOrderDisplay();
+        showSyncMessage('⚠️ Nessun cluster trovato nei colori', 'warning');
+        updateSyncTimestamp();
+        return;
+    }
+    
+    // Mantieni l'ordine esistente SOLO per i cluster che sono ancora presenti nei colori
+    const existingValidClusters = clusterOrder.filter(c => clustersFromColors.includes(c));
+    console.log('Cluster esistenti ancora validi:', existingValidClusters);
+    
+    // Aggiungi nuovi cluster che non erano nell'ordine precedente
+    const newClusters = clustersFromColors.filter(c => !clusterOrder.includes(c));
+    console.log('Nuovi cluster da aggiungere:', newClusters);
+    
+    // Combina ordine esistente + nuovi cluster ordinati alfabeticamente
+    const oldOrder = [...clusterOrder];
+    clusterOrder = [...existingValidClusters, ...newClusters.sort()];
+    
+    console.log('Ordine cluster PRIMA:', oldOrder);
+    console.log('Ordine cluster DOPO:', clusterOrder);
+    
+    // Mostra feedback visivo appropriato
+    if (newClusters.length > 0) {
+        showSyncMessage(`✅ Aggiunti ${newClusters.length} nuovi cluster: ${newClusters.join(', ')}`, 'success');
+    } else if (oldOrder.length !== clusterOrder.length) {
+        showSyncMessage('🔄 Ordine cluster aggiornato (rimossi cluster non più utilizzati)', 'info');
+    } else {
+        showSyncMessage('✅ Tutti i cluster sono già sincronizzati', 'info');
+    }
+    
+    updateSyncTimestamp();
+    console.log('=== FINE SINCRONIZZAZIONE CLUSTER ===');
+    
+    updateClusterOrderDisplay();
+    
+    // Inizializza drag and drop
+    setTimeout(() => {
+        initSortable();
+    }, 100);
+}
+
+// Funzioni per feedback visivo sincronizzazione cluster
+function showSyncMessage(message, type = 'info') {
+    const messageElement = document.getElementById('syncMessage');
+    
+    if (!messageElement) {
+        console.warn('Elemento syncMessage non trovato');
+        return;
+    }
+    
+    // Mappa i tipi a classi Bootstrap
+    const typeClasses = {
+        'success': 'alert-success',
+        'info': 'alert-info',
+        'warning': 'alert-warning',
+        'error': 'alert-danger'
+    };
+    
+    // Rimuovi classi precedenti e aggiungi quella nuova
+    messageElement.className = `alert alert-sm mb-2 ${typeClasses[type] || 'alert-info'}`;
+    messageElement.textContent = message;
+    
+    // Mostra il messaggio
+    messageElement.style.display = 'block';
+    
+    // Nascondi il messaggio dopo 5 secondi
+    setTimeout(() => {
+        messageElement.style.display = 'none';
+    }, 5000);
+}
+
+function updateSyncTimestamp() {
+    try {
+        const now = new Date();
+        const timeString = now.toLocaleTimeString('it-IT', { 
+            hour: '2-digit', 
+            minute: '2-digit', 
+            second: '2-digit' 
+        });
+        const timestampElement = document.getElementById('lastSyncTime');
+        if (timestampElement) {
+            timestampElement.textContent = timeString;
+        }
+        // Aggiorna anche altri elementi di timestamp se esistono
+        const syncMessageElement = document.getElementById('syncMessage');
+        if (syncMessageElement) {
+            const currentText = syncMessageElement.textContent;
+            if (currentText && !currentText.includes('aggiornato alle')) {
+                syncMessageElement.textContent = `${currentText} (aggiornato alle ${timeString})`;
+            }
+        }
+    } catch (error) {
+        console.warn('Errore durante aggiornamento timestamp:', error);
+    }
+}
+
+// Forza il refresh dell'ordine cluster
+function refreshClusterOrder() {
+    console.log('=== REFRESH MANUALE CLUSTER ===');
+    console.log('Forzando aggiornamento ordine cluster...');
+    
+    showSyncMessage('🔄 Ricaricamento cluster in corso...', 'info');
+    
+    // Prima ricarica i colori per essere sicuri di avere i dati più aggiornati
+    $.get(`/api/cabin/${cabinId}/colors`)
+        .done(function(data) {
+            console.log('Dati colori ricaricati:', data);
+            colorsList = data.colors || [];
+            
+            // Poi sincronizza i cluster
+            syncClusterOrderWithColors();
+            
+            // Mostra messaggio di conferma sul pulsante
+            const btn = $('#refreshClusterBtn');
+            const originalText = btn.html();
+            btn.html('<i class="fas fa-check text-success me-2"></i>Aggiornato!');
+            setTimeout(() => {
+                btn.html(originalText);
+            }, 1500);
+        })
+        .fail(function() {
+            console.error('Errore durante il refresh dei cluster');
+            showSyncMessage('❌ Errore durante l\'aggiornamento dei cluster', 'error');
+        });
+}
+
+// Aggiorna tabella colori
+function updateColorsTable() {
+    const tbody = $('#colorsTableBody');
+    tbody.empty();
+    
+    if (colorsList.length === 0) {
+        $('#emptyState').show();
+        return;
+    }
+    
+    $('#emptyState').hide();
+    
+    colorsList.forEach((color, index) => {
+        const isLocked = color.locked || false;
+        const row = $(`
+            <tr class="color-row ${color.in_execution ? 'table-warning' : color.completed ? 'table-success' : ''} ${isLocked ? 'locked' : ''}" 
+                data-color-index="${index}" 
+                data-color-id="${color.id}" 
+                data-locked="${isLocked}" 
+                draggable="true">
+                <td>
+                    <span class="drag-handle">
+                        <i class="fas fa-grip-vertical"></i>
+                    </span>
+                </td>
+                <td>${index + 1}</td>
+                <td><span class="color-code">${color.color_code}</span></td>
+                <td>
+                    <span class="badge bg-secondary">${color.color_type}</span>
+                </td>
+                <td>
+                    <span class="badge cluster-badge ${getClusterBadgeClass(color.cluster)}">${color.cluster || 'N/D'}</span>
+                </td>
+                <td>${color.ch_value || 'N/D'}</td>
+                <td>
+                    <span class="badge ${color.lunghezza_ordine === 'lungo' ? 'bg-success' : 'bg-primary'}">${color.lunghezza_ordine || 'N/D'}</span>
+                </td>
+                <td>${color.input_sequence || 'N/D'}</td>
+                <td>${color.sequence_type || 'N/D'}</td>
+                <td>
+                    <button class="lock-toggle ${isLocked ? 'locked' : 'unlocked'}" 
+                            onclick="toggleColorLock(${index})" 
+                            title="${isLocked ? 'Sblocca colore' : 'Blocca colore'}">
+                        <i class="fas ${isLocked ? 'fa-lock' : 'fa-unlock'}"></i>
+                    </button>
+                </td>
+                <td>
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" ${color.in_execution ? 'checked' : ''} 
+                               onchange="toggleExecution(${color.id}, this.checked)" ${color.completed ? 'disabled' : ''}>
+                    </div>
+                </td>
+                <td>
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" ${color.completed ? 'checked' : ''} disabled>
+                    </div>
+                </td>
+                <td>
+                    <button class="btn btn-sm btn-outline-danger" onclick="removeColor(${color.id})" title="Rimuovi colore">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </td>
+            </tr>
+        `);
+        tbody.append(row);
+    });
+    
+    // Reinizializza il drag & drop HTML5 dopo aver aggiornato la tabella
+    initColorDragDrop();
+}
+
+// Ottieni classe CSS per badge cluster
+function getClusterBadgeClass(cluster) {
+    const classes = {
+        'Bianco': 'bg-light text-dark',
+        'Nero': 'bg-dark',
+        'Rosso': 'bg-danger',
+        'Blu': 'bg-primary',
+        'Verde': 'bg-success',
+        'Giallo': 'bg-warning text-dark'
+    };
+    return classes[cluster] || 'bg-secondary';
+}
+
+// Aggiorna statistiche
+function updateStatistics() {
+    const total = colorsList.length;
+    const executing = colorsList.filter(c => c.in_execution).length;
+    const completed = colorsList.filter(c => c.completed).length;
+    const pending = total - completed;
+    
+    $('#totalColors').text(total);
+    $('#executingColors').text(executing);
+    $('#completedColors').text(completed);
+    $('#pendingColors').text(pending);
+}
+
+// Aggiungi a lista temporanea
+function addToTemporaryList() {
+    const formData = getFormData();
+    if (!validateFormData(formData)) return;
+    
+    // Aggiungi ID temporaneo
+    formData.temp_id = Date.now();
+    temporaryList.push(formData);
+    
+    updateTemporaryListDisplay();
+    clearForm();
+}
+
+// Ottieni dati dal form
+function getFormData() {
+    return {
+        code: $('#colorCode').val().trim(),
+        type: $('#colorType').val(),
+        cluster: $('#colorCluster').val(),
+        CH: parseFloat($('#colorCH').val()) || null,
+        lunghezza_ordine: $('#colorLength').val(),
+        sequence: parseInt($('#colorSequence').val()) || null,
+        sequence_type: $('#colorSequenceType').val() || null
+    };
+}
+
+// Valida dati form
+function validateFormData(data) {
+    if (!data.code) {
+        alert('Inserisci il codice colore');
+        return false;
+    }
+    if (!data.type) {
+        alert('Seleziona il tipo di colore');
+        return false;
+    }
+    if (!data.lunghezza_ordine) {
+        alert('Seleziona la lunghezza ordine');
+        return false;
+    }
+    return true;
+}
+
+// Aggiorna visualizzazione lista temporanea
+function updateTemporaryListDisplay() {
+    const container = $('#temporaryListContainer');
+    const tbody = $('#temporaryListBody');
+    const count = $('#temporaryCount');
+    
+    if (temporaryList.length === 0) {
+        container.hide();
+        return;
+    }
+    
+    container.show();
+    count.text(temporaryList.length);
+    tbody.empty();
+    
+    temporaryList.forEach((color, index) => {
+        const row = $(`
+            <tr>
+                <td><span class="color-code">${color.code}</span></td>
+                <td><span class="badge bg-secondary">${color.type}</span></td>
+                <td>${color.cluster || 'Auto'}</td>
+                <td>${color.CH || 'N/D'}</td>
+                <td><span class="badge ${color.lunghezza_ordine === 'lungo' ? 'bg-success' : 'bg-primary'}">${color.lunghezza_ordine}</span></td>
+                <td>${color.sequence || 'N/D'}</td>
+                <td>${color.sequence_type || 'N/D'}</td>
+                <td>
+                    <button class="btn btn-sm btn-outline-danger" onclick="removeFromTemporary(${color.temp_id})">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </td>
+            </tr>
+        `);
+        tbody.append(row);
+    });
+}
+
+// Rimuovi dalla lista temporanea
+function removeFromTemporary(tempId) {
+    temporaryList = temporaryList.filter(c => c.temp_id !== tempId);
+    updateTemporaryListDisplay();
+}
+
+// Pulisci lista temporanea
+function clearTemporaryList() {
+    temporaryList = [];
+    updateTemporaryListDisplay();
+}
+
+// Pulisci form
+function clearForm() {
+    $('#addColorForm')[0].reset();
+    $('#colorLength').val(cabinId === 1 ? 'corto' : 'lungo');
+}
+
+// Aggiungi e ottimizza
+function addAndOptimize() {
+    // Aggiungi colore corrente alla lista temporanea se il form è compilato E valido
+    const formData = getFormData();
+    if (formData.code && formData.type && formData.lunghezza_ordine) {
+        // Valida completamente i dati prima di aggiungere
+        if (validateFormData(formData)) {
+            formData.temp_id = Date.now();
+            temporaryList.push(formData);
+        } else {
+            return; // Interrompi se i dati non sono validi
+        }
+    }
+    
+    if (temporaryList.length === 0) {
+        alert('Nessun colore da aggiungere');
+        return;
+    }
+    
+    // Trova il colore attualmente in esecuzione per determinare il cluster di partenza
+    const executingColor = colorsList.find(c => c.in_execution);
+    const startCluster = executingColor ? executingColor.cluster : null;
+    
+    // Prepara i dati per l'ottimizzazione
+    const existingColors = colorsList.filter(c => !c.completed).map(c => ({
+        code: c.color_code || c.code,
+        type: c.color_type || c.type,
+        sequence: c.input_sequence || c.sequence,
+        lunghezza_ordine: c.lunghezza_ordine,
+        CH: c.ch_value || c.CH,
+        sequence_type: c.sequence_type
+    }));
+    
+    const tempColors = temporaryList.map(tc => ({
+        code: tc.code,
+        type: tc.type,
+        sequence: tc.sequence,
+        lunghezza_ordine: tc.lunghezza_ordine,
+        CH: tc.CH,
+        sequence_type: tc.sequence_type
+    }));
+    
+    const allColors = [...existingColors, ...tempColors];
+    
+    // Valida tutti i colori prima di inviarli
+    for (let i = 0; i < allColors.length; i++) {
+        const color = allColors[i];
+        if (!color.code || !color.code.trim()) {
+            alert(`Errore: Colore ${i + 1} ha un codice mancante o vuoto. Controlla i dati inseriti.`);
+            return;
+        }
+        if (!color.type || !color.type.trim()) {
+            alert(`Errore: Colore ${i + 1} (${color.code}) ha un tipo mancante o vuoto. Controlla i dati inseriti.`);
+            return;
+        }
+        if (!color.lunghezza_ordine || !color.lunghezza_ordine.trim()) {
+            alert(`Errore: Colore ${i + 1} (${color.code}) ha una lunghezza_ordine mancante. Controlla i dati inseriti.`);
+            return;
+        }
+    }
+    
+    const requestData = {
+        colors_today: allColors,
+        start_cluster_name: startCluster
+    };
+    
+    // Mostra indicatore di caricamento
+    const btn = $('button:contains("Aggiungi e Ricalcola")');
+    const originalText = btn.html();
+    btn.html('<i class="fas fa-spinner fa-spin me-2"></i>Ricalcolando...').prop('disabled', true);
+    
+    // Chiama l'API di ottimizzazione
+    $.ajax({
+        url: '/api/optimize',
+        method: 'POST',
+        contentType: 'application/json',
+        data: JSON.stringify(requestData),
+        success: function(response) {
+            alert('Ottimizzazione completata con successo!');
+            clearTemporaryList();
+            clearForm();
+            loadColorsList(); // Questo ora include automaticamente la sincronizzazione dei cluster
+        },
+        error: function(xhr, status, error) {
+            let errorMessage = 'Errore durante il ricalcolo';
+            if (xhr.responseJSON && xhr.responseJSON.detail) {
+                errorMessage = xhr.responseJSON.detail;
+            }
+            alert(errorMessage);
+        },
+        complete: function() {
+            btn.html(originalText).prop('disabled', false);
+        }
+    });
+}
+
+// Toggle stato esecuzione
+function toggleExecution(colorId, isExecuting) {
+    // Se sto impostando un colore come "in esecuzione", devo prima controllare
+    // che non ci sia già un altro colore in esecuzione
+    if (isExecuting) {
+        const currentExecuting = colorsList.find(c => c.in_execution && c.id !== colorId);
+        if (currentExecuting) {
+            if (!confirm('C\'è già un colore in esecuzione. Vuoi sostituirlo?')) {
+                // Ripristina il checkbox
+                loadColorsList();
+                return;
+            }
+        }
+    }
+    
+    $.ajax({
+        url: `/api/cabin/${cabinId}/colors/${colorId}/execution`,
+        method: 'PUT',
+        contentType: 'application/json',
+        data: JSON.stringify({ in_execution: isExecuting }),
+        success: function() {
+            loadColorsList();
+        },
+        error: function() {
+            alert('Errore durante l\'aggiornamento dello stato');
+            loadColorsList();
+        }
+    });
+}
+
+// Rimuovi colore
+function removeColor(colorId) {
+    if (!confirm('Sei sicuro di voler rimuovere questo colore?')) {
+        return;
+    }
+    
+    $.ajax({
+        url: `/api/cabin/${cabinId}/colors/${colorId}`,
+        method: 'DELETE',
+        success: function() {
+            loadColorsList();
+        },
+        error: function() {
+            alert('Errore durante la rimozione del colore');
+        }
+    });
+}
+
+// Aggiorna lista colori
+function refreshColorList() {
+    loadColorsList();
+}
+
+// Aggiorna visualizzazione ordine cluster
+function updateClusterOrderDisplay() {
+    const list = $('#clusterOrderList');
+    list.empty();
+    
+    if (clusterOrder.length === 0) {
+        $('#emptyClusterState').show();
+        return;
+    }
+    
+    $('#emptyClusterState').hide();
+    
+    clusterOrder.forEach((cluster, index) => {
+        const listItem = $(`
+            <li class="list-group-item d-flex justify-content-between align-items-center cluster-order-item" data-cluster="${cluster}">
+                <div class="d-flex align-items-center">
+                    <span class="drag-handle me-2">
+                        <i class="fas fa-grip-vertical"></i>
+                    </span>
+                    <span class="cluster-name">${cluster}</span>
+                    <small class="text-muted ms-2">(posizione ${index + 1})</small>
+                </div>
+                <div>
+                    <button class="btn btn-sm btn-outline-danger me-1" onclick="removeClusterFromOrder('${cluster}')" title="Rimuovi cluster">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                    <button class="btn btn-sm btn-outline-secondary lock-cluster-btn unlocked" onclick="toggleClusterLock('${cluster}', this)" title="Blocca posizione">
+                        <i class="fas fa-unlock"></i>
+                    </button>
+                </div>
+            </li>
+        `);
+        list.append(listItem);
+    });
+    
+    updateClusterStats();
+}
+
+// Rimuovi cluster dall'ordine
+function removeClusterFromOrder(cluster) {
+    clusterOrder = clusterOrder.filter(c => c !== cluster);
+    updateClusterOrderDisplay();
+}
+
+// Toggle blocco cluster
+function toggleClusterLock(cluster, button) {
+    const $button = $(button);
+    const $listItem = $button.closest('li');
+    const $icon = $button.find('i');
+    
+    const isLocked = $icon.hasClass('fa-lock');
+    
+    if (isLocked) {
+        // Sblocca il cluster
+        $icon.removeClass('fa-lock').addClass('fa-unlock');
+        $button.removeClass('locked').addClass('unlocked');
+        $listItem.removeClass('locked');
+        $button.attr('title', 'Blocca posizione');
+    } else {
+        // Blocca il cluster
+        $icon.removeClass('fa-unlock').addClass('fa-lock');
+        $button.removeClass('unlocked').addClass('locked');
+        $listItem.addClass('locked');
+        $button.attr('title', 'Sblocca posizione');
+    }
+    
+    // Aggiorna le statistiche
+    updateClusterStats();
+    
+    // Reinizializza sortable per aggiornare gli elementi che possono essere trascinati
+    initSortable();
+}
+
+// Funzioni per gestione ordine cluster
+
+function optimizeClusterSequence() {
+    if (clusterOrder.length === 0) {
+        showNotification('Nessun cluster disponibile per l\'ordinamento', 'warning');
+        return;
+    }
+    
+    const lockedClusters = getLockedClusters();
+    const freeClusters = clusterOrder.filter(c => !lockedClusters.includes(c));
+    
+    if (freeClusters.length === 0) {
+        showNotification('Tutti i cluster sono bloccati - nessun riordino possibile', 'info');
+        return;
+    }
+    
+    if (!confirm(`Applicare l'ordine cluster? Questo riorganizzerà i ${colorsList.length} colori secondo l'ordine dei cluster impostato.`)) {
+        return;
+    }
+    
+    const btn = $('#optimizeClusterBtn');
+    const btnText = btn.find('.btn-text');
+    const spinner = btn.find('.spinner-border');
+    
+    // Mostra loading
+    btnText.text('Applicando...');
+    spinner.removeClass('d-none');
+    btn.prop('disabled', true);
+    
+    // Prepara dati per riorganizzazione
+    const clustersToApply = [...clusterOrder]; // Copia l'ordine attuale
+    
+    console.log('Applicando ordine cluster:', clustersToApply);
+    
+    $.ajax({
+        url: `/api/cabin/${cabinId}/apply-cluster-order`,
+        method: 'POST',
+        contentType: 'application/json',
+        data: JSON.stringify({
+            cluster_order: clustersToApply,
+            colors: colorsList
+        }),
+        timeout: 60000,
+        success: function(response) {
+            console.log('Ordine cluster applicato:', response);
+            
+            showNotification(`Ordine cluster applicato! ${response.message}`, 'success');
+            
+            // Ricarica la lista colori
+            setTimeout(() => {
+                refreshColorList();
+            }, 500);
+        },
+        error: function(xhr, status, error) {
+            console.error('Errore applicazione ordine cluster:', xhr);
+            
+            let errorMsg = 'Errore durante l\'applicazione ordine cluster';
+            if (xhr.responseJSON && xhr.responseJSON.error) {
+                errorMsg = xhr.responseJSON.error;
+            }
+            
+            showNotification(errorMsg, 'error');
+        },
+        complete: function() {
+            // Ripristina bottone
+            btnText.text('Applica Ordine');
+            spinner.addClass('d-none');
+            btn.prop('disabled', false);
+        }
+    });
+}
+
+function resetClusterOrder() {
+    if (!confirm('Ripristinare l\'ordine cluster all\'ordine alfabetico?')) {
+        return;
+    }
+    
+    // Ottieni cluster unici dai colori attuali
+    const clustersFromColors = [...new Set(colorsList.map(c => c.cluster).filter(c => c))];
+    
+    // Riordina alfabeticamente
+    clusterOrder = clustersFromColors.sort();
+    
+    updateClusterOrderDisplay();
+    showNotification('Ordine cluster ripristinato all\'ordine alfabetico', 'info');
+}
+
+function getLockedClusters() {
+    const lockedClusters = [];
+    $('#clusterOrderList .lock-cluster-btn.locked').each(function() {
+        const cluster = $(this).closest('li').data('cluster');
+        if (cluster) {
+            lockedClusters.push(cluster);
+        }
+    });
+    return lockedClusters;
+}
+
+function updateClusterStats() {
+    const lockedCount = getLockedClusters().length;
+    const totalCount = clusterOrder.length;
+    const freeCount = totalCount - lockedCount;
+    
+    const statsHtml = `
+        <div class="d-flex justify-content-between">
+            <small><strong>Totali:</strong> ${totalCount}</small>
+            <small><strong>Bloccati:</strong> ${lockedCount}</small>
+            <small><strong>Liberi:</strong> ${freeCount}</small>
+        </div>
+    `;
+    
+    $('#clusterStats').html(statsHtml);
+}
+
+// Ricalcola con ordine parziale
+function recalculateWithPartialOrder() {
+    // Prepara l'ordine parziale dei cluster con informazioni di lock
+    const partialClusterOrder = clusterOrder.map((cluster, index) => {
+        const isLocked = $(`.cluster-name:contains('${cluster}')`).closest('li').find('i').hasClass('fa-lock');
+        return {
+            cluster: cluster,
+            position: index,
+            locked: isLocked
+        };
+    });
+    
+    const lockedCount = partialClusterOrder.filter(c => c.locked).length;
+    
+    if (lockedCount === partialClusterOrder.length) {
+        alert('Tutti i cluster sono bloccati. Sblocca almeno un cluster per la ricalcolazione.');
+        return;
+    }
+    
+    // Prepara i dati per l'ottimizzazione parziale
+    const existingColors = colorsList.filter(c => !c.completed).map(c => ({
+        code: c.color_code || c.code,
+        type: c.color_type || c.type,
+        sequence: c.input_sequence || c.sequence,
+        lunghezza_ordine: c.lunghezza_ordine,
+        CH: c.ch_value || c.CH,
+        sequence_type: c.sequence_type
+    }));
+    
+    const tempColors = temporaryList.map(tc => ({
+        code: tc.code,
+        type: tc.type,
+        sequence: tc.sequence,
+        lunghezza_ordine: tc.lunghezza_ordine,
+        CH: tc.CH,
+        sequence_type: tc.sequence_type
+    }));
+    
+    const allColors = [...existingColors, ...tempColors];
+    
+    const requestData = {
+        colors: allColors,
+        partial_cluster_order: partialClusterOrder,
+        prioritized_reintegrations: []
+    };
+    
+    // Mostra indicatore di caricamento
+    const btn = $('#recalculateBtn');
+    const originalText = btn.html();
+    btn.html('<i class="fas fa-spinner fa-spin me-2"></i>Ricalcolando...').prop('disabled', true);
+    
+    // Chiama l'API di ottimizzazione parziale
+    $.ajax({
+        url: `/api/cabin/${cabinId}/optimize-partial`,
+        method: 'POST',
+        contentType: 'application/json',
+        data: JSON.stringify(requestData),
+        success: function(response) {
+            alert('Ricalcolo completato con successo!');
+            clearTemporaryList();
+            clearForm();
+            loadColorsList(); // Questo ora include automaticamente la sincronizzazione dei cluster
+        },
+        error: function(xhr, status, error) {
+            let errorMessage = 'Errore durante il ricalcolo';
+            if (xhr.responseJSON && xhr.responseJSON.detail) {
+                errorMessage = xhr.responseJSON.detail;
+            }
+            alert(errorMessage);
+        },
+        complete: function() {
+            btn.html(originalText).prop('disabled', false);
+        }
+    });
+}
+
+// Inizializza jQuery UI sortable per il drag and drop
+function initSortable() {
+    // Inizializza sortable per i cluster
+    initClusterSortable();
+}
+
+function initClusterSortable() {
+    const list = $('#clusterOrderList');
+    
+    if (list.length === 0) {
+        return;
+    }
+    
+    // Distruggi eventuali istanze precedenti
+    if (list.hasClass('ui-sortable')) {
+        list.sortable('destroy');
+    }
+    
+    list.sortable({
+        items: 'li:not(.locked)',
+        placeholder: 'ui-sortable-placeholder',
+        helper: 'clone',
+        opacity: 0.8,
+        cursor: 'move',
+        tolerance: 'pointer',
+        update: function(event, ui) {
+            // Aggiorna l'array clusterOrder in base alla nuova posizione
+            const newOrder = [];
+            list.find('li').each(function() {
+                const cluster = $(this).data('cluster');
+                if (cluster) {
+                    newOrder.push(cluster);
+                }
+            });
+            clusterOrder = newOrder;
+            updateClusterOrderDisplay(); // Aggiorna la visualizzazione
+            updateClusterStats();
+            
+            console.log('Cluster riordinati:', clusterOrder);
+        },
+        start: function(event, ui) {
+            ui.item.addClass('dragging');
+        },
+        stop: function(event, ui) {
+            ui.item.removeClass('dragging');
+        }
+    });
+    
+    // Disabilita il sorting per gli elementi bloccati
+    list.find('li.locked').addClass('ui-sortable-disabled');
+}
+
+// Ripristina ordine originale cluster
+function resetClusterOrder() {
+    if (!confirm('Sei sicuro di voler ripristinare l\'ordine originale dei cluster?')) {
+        return;
+    }
+    
+    // Richiesta all'API per ottenere l'ordine originale
+    $.get(`/api/cabin/${cabinId}/original_cluster_order`)
+        .done(function(data) {
+            clusterOrder = data.order || [];
+            updateClusterOrderDisplay();
+            
+            // Reinizializza sortable dopo il reset
+            setTimeout(() => {
+                initSortable();
+            }, 100);
+        })
+        .fail(function() {
+            console.error('Errore durante il ripristino dell\'ordine originale');
+            alert('Errore durante il ripristino dell\'ordine originale dei cluster');
+        });
+}
+
+// Blocca tutti i cluster
+function lockAllClusters() {
+    $('#clusterOrderList .lock-cluster-btn').each(function() {
+        const $button = $(this);
+        const $icon = $button.find('i');
+        const $listItem = $button.closest('li');
+        
+        if ($icon.hasClass('fa-unlock')) {
+            $icon.removeClass('fa-unlock').addClass('fa-lock');
+            $button.removeClass('unlocked').addClass('locked');
+            $listItem.addClass('locked');
+            $button.attr('title', 'Sblocca posizione');
+        }
+    });
+    updateClusterStats();
+    initSortable();
+}
+
+// Sblocca tutti i cluster
+function unlockAllClusters() {
+    $('#clusterOrderList .lock-cluster-btn').each(function() {
+        const $button = $(this);
+        const $icon = $button.find('i');
+        const $listItem = $button.closest('li');
+        
+        if ($icon.hasClass('fa-lock')) {
+            $icon.removeClass('fa-lock').addClass('fa-unlock');
+            $button.removeClass('locked').addClass('unlocked');
+            $listItem.removeClass('locked');
+            $button.attr('title', 'Blocca posizione');
+        }
+    });
+    updateClusterStats();
+    initSortable();
+}
+
+// Test di debug della sincronizzazione cluster
+function testClusterSync() {
+    console.log('=== INIZIO TEST DEBUG CLUSTER ===');
+    showSyncMessage('🔍 Avvio test debug cluster...', 'info');
+    
+    console.log('1. Stato attuale variabili:');
+    console.log('colorsList:', colorsList);
+    console.log('clusterOrder:', clusterOrder);
+    console.log('cabinId:', cabinId);
+    
+    console.log('2. Test chiamata API colori...');
+    $.get(`/api/cabin/${cabinId}/colors`)
+        .done(function(data) {
+            console.log('Risposta API colori:', data);
+            const colors = data.colors || [];
+            const clustersFromColors = [...new Set(colors.map(c => c.cluster).filter(c => c))];
+            console.log('Cluster estratti dai colori:', clustersFromColors);
+            
+            console.log('3. Test chiamata API cluster order...');
+            $.get(`/api/cabin/${cabinId}/cluster_order`)
+                .done(function(clusterData) {
+                    console.log('Risposta API cluster order:', clusterData);
+                    
+                    console.log('4. Confronto:');
+                    console.log('- Cluster nei colori:', clustersFromColors.sort());
+                    console.log('- Cluster nell\'ordine:', clusterData.order || []);
+                    
+                    const clustersMatch = JSON.stringify(clustersFromColors.sort()) === JSON.stringify((clusterData.order || []).sort());
+                    console.log('5. Cluster sincronizzati?', clustersMatch);
+                    
+                    if (!clustersMatch) {
+                        console.log('6. PROBLEMA RILEVATO - Avvio sincronizzazione forzata...');
+                        showSyncMessage('⚠️ Disallineamento rilevato - Sincronizzazione in corso...', 'warning');
+                        colorsList = colors; // Aggiorna la variabile globale
+                        syncClusterOrderWithColors();
+                    } else {
+                        console.log('6. Cluster già sincronizzati');
+                        showSyncMessage('✅ Test completato - Cluster correttamente sincronizzati', 'success');
+                    }
+                    
+                    console.log('=== FINE TEST DEBUG CLUSTER ===');
+                    alert('Test completato - controlla la console per i dettagli');
+                })
+                .fail(function() {
+                    console.error('Errore chiamata API cluster order');
+                });
+        })
+        .fail(function() {
+            console.error('Errore chiamata API colori');
+        });
+}
+
+// ========== NUOVE FUNZIONI PER BLOCCO COLORI E DRAG & DROP ==========
+
+// Inizializza drag & drop per la tabella colori
+function initColorDragDrop() {
+    const tbody = document.getElementById('colorsTableBody');
+    if (!tbody) return;
+    
+    // Event listeners per drag & drop
+    tbody.addEventListener('dragstart', handleDragStart);
+    tbody.addEventListener('dragover', handleDragOver);
+    tbody.addEventListener('drop', handleDrop);
+    tbody.addEventListener('dragend', handleDragEnd);
+    
+    console.log('Drag & drop inizializzato per tabella colori');
+}
+
+let draggedRow = null;
+
+function handleDragStart(e) {
+    if (!e.target.closest('.color-row')) return;
+    
+    draggedRow = e.target.closest('.color-row');
+    draggedRow.classList.add('dragging');
+    
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/html', draggedRow.outerHTML);
+    
+    console.log('Drag started:', draggedRow.dataset.colorIndex);
+}
+
+function handleDragOver(e) {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+    
+    const targetRow = e.target.closest('.color-row');
+    if (!targetRow || targetRow === draggedRow) return;
+    
+    // Rimuovi highlight precedenti
+    document.querySelectorAll('.color-row').forEach(row => {
+        row.classList.remove('drag-over');
+    });
+    
+    // Aggiungi highlight alla riga target
+    targetRow.classList.add('drag-over');
+}
+
+function handleDrop(e) {
+    e.preventDefault();
+    
+    const targetRow = e.target.closest('.color-row');
+    if (!targetRow || targetRow === draggedRow) return;
+    
+    const draggedIndex = parseInt(draggedRow.dataset.colorIndex);
+    const targetIndex = parseInt(targetRow.dataset.colorIndex);
+    
+    console.log(`Moving color from ${draggedIndex} to ${targetIndex}`);
+    
+    // Crea nuovo ordine
+    const newOrder = [...Array(colorsList.length).keys()];
+    const [movedItem] = newOrder.splice(draggedIndex, 1);
+    newOrder.splice(targetIndex, 0, movedItem);
+    
+    // Invia aggiornamento al backend
+    reorderColors(newOrder);
+}
+
+function handleDragEnd(e) {
+    // Pulisci visual feedback
+    document.querySelectorAll('.color-row').forEach(row => {
+        row.classList.remove('dragging', 'drag-over');
+    });
+    
+    draggedRow = null;
+}
+
+// Funzione per riordinare i colori
+function reorderColors(newOrder) {
+    console.log('Riordino colori:', newOrder);
+    
+    $.ajax({
+        url: `/api/cabin/${cabinId}/colors/reorder`,
+        method: 'PUT',
+        contentType: 'application/json',
+        data: JSON.stringify({ new_order: newOrder }),
+        success: function(response) {
+            console.log('Colori riordinati con successo');
+            refreshColorList(); // Ricarica la lista
+            showNotification('Colori riordinati con successo', 'success');
+        },
+        error: function(xhr) {
+            console.error('Errore durante riordino colori');
+            let errorMsg = 'Errore durante il riordinamento';
+            if (xhr.responseJSON && xhr.responseJSON.error) {
+                errorMsg = xhr.responseJSON.error;
+            }
+            showNotification(errorMsg, 'error');
+            refreshColorList(); // Ricarica per ripristinare ordine originale
+        }
+    });
+}
+
+// Funzione per bloccare/sbloccare un singolo colore
+function toggleColorLock(colorIndex) {
+    const color = colorsList[colorIndex];
+    if (!color) return;
+    
+    const newLockState = !color.locked;
+    
+    console.log(`Toggle lock color ${color.color_code}: ${newLockState}`);
+    
+    $.ajax({
+        url: `/api/cabin/${cabinId}/colors/${colorIndex}/lock`,
+        method: 'PUT',
+        contentType: 'application/json',
+        data: JSON.stringify({ locked: newLockState }),
+        success: function(response) {
+            // Aggiorna stato locale
+            color.locked = newLockState;
+            
+            // Aggiorna visivamente
+            const row = $(`.color-row[data-color-index="${colorIndex}"]`);
+            const lockBtn = row.find('.lock-toggle');
+            const lockIcon = lockBtn.find('i');
+            
+            if (newLockState) {
+                row.addClass('locked');
+                lockBtn.removeClass('unlocked').addClass('locked');
+                lockIcon.removeClass('fa-unlock').addClass('fa-lock');
+                lockBtn.attr('title', 'Sblocca colore');
+            } else {
+                row.removeClass('locked');
+                lockBtn.removeClass('locked').addClass('unlocked');
+                lockIcon.removeClass('fa-lock').addClass('fa-unlock');
+                lockBtn.attr('title', 'Blocca colore');
+            }
+            
+            const action = newLockState ? 'bloccato' : 'sbloccato';
+            showNotification(`Colore ${color.color_code} ${action}`, 'info');
+            
+            updateLockStats();
+        },
+        error: function(xhr) {
+            console.error('Errore durante toggle lock colore');
+            let errorMsg = 'Errore durante il blocco/sblocco';
+            if (xhr.responseJSON && xhr.responseJSON.error) {
+                errorMsg = xhr.responseJSON.error;
+            }
+            showNotification(errorMsg, 'error');
+        }
+    });
+}
+
+// Funzione per bloccare/sbloccare un cluster
+function toggleClusterLock(clusterName) {
+    const clusterColors = colorsList.filter(c => c.cluster === clusterName);
+    if (clusterColors.length === 0) return;
+    
+    // Determina nuovo stato (se almeno un colore è sbloccato, blocca tutto)
+    const hasUnlocked = clusterColors.some(c => !c.locked);
+    const newLockState = hasUnlocked;
+    
+    console.log(`Toggle lock cluster ${clusterName}: ${newLockState}`);
+    
+    $.ajax({
+        url: `/api/cabin/${cabinId}/cluster/${clusterName}/lock`,
+        method: 'PUT',
+        contentType: 'application/json',
+        data: JSON.stringify({ locked: newLockState }),
+        success: function(response) {
+            console.log('Cluster lock aggiornato:', response);
+            
+            // Aggiorna stati locali
+            clusterColors.forEach(color => {
+                color.locked = newLockState;
+            });
+            
+            // Aggiorna visivamente tutti i colori del cluster
+            updateColorsTable();
+            
+            const action = newLockState ? 'bloccato' : 'sbloccato';
+            showNotification(`Cluster ${clusterName} ${action} (${clusterColors.length} colori)`, 'info');
+            
+            updateLockStats();
+        },
+        error: function(xhr) {
+            console.error('Errore durante toggle lock cluster');
+            let errorMsg = 'Errore durante il blocco/sblocco cluster';
+            if (xhr.responseJSON && xhr.responseJSON.error) {
+                errorMsg = xhr.responseJSON.error;
+            }
+            showNotification(errorMsg, 'error');
+        }
+    });
+}
+
+// Funzione per ottimizzare rispettando i blocchi
+function optimizeWithLocks() {
+    if (colorsList.length === 0) {
+        showNotification('Nessun colore da ottimizzare', 'warning');
+        return;
+    }
+    
+    const lockedCount = colorsList.filter(c => c.locked).length;
+    const freeCount = colorsList.length - lockedCount;
+    
+    if (freeCount === 0) {
+        showNotification('Tutti i colori sono bloccati - nessuna ottimizzazione necessaria', 'info');
+        return;
+    }
+    
+    if (!confirm(`Ottimizzare ${freeCount} colori liberi rispettando ${lockedCount} colori bloccati?`)) {
+        return;
+    }
+    
+    const btn = $('#optimizeWithLocksBtn');
+    const btnText = btn.find('.btn-text');
+    const spinner = btn.find('.spinner-border');
+    
+    // Mostra loading
+    btnText.text('Ottimizzazione...');
+    spinner.removeClass('d-none');
+    btn.prop('disabled', true);
+    
+    // Prepara dati per il backend
+    const colorsForOptimization = colorsList.map((color, index) => ({
+        code: color.color_code,
+        type: color.color_type,
+        cluster: color.cluster,
+        CH: color.ch_value,
+        lunghezza_ordine: color.lunghezza_ordine,
+        sequence: color.input_sequence,
+        sequence_type: color.sequence_type,
+        locked: color.locked || false,
+        position: color.locked ? index : null
+    }));
+    
+    console.log('Dati per ottimizzazione con blocchi:', colorsForOptimization);
+    
+    $.ajax({
+        url: `/api/cabin/${cabinId}/optimize-locked`,
+        method: 'POST',
+        contentType: 'application/json',
+        data: JSON.stringify({
+            colors_today: colorsForOptimization,
+            prioritized_reintegrations: []
+        }),
+        timeout: 60000,
+        success: function(response) {
+            console.log('Ottimizzazione con blocchi completata:', response);
+            
+            showNotification(`Ottimizzazione completata! ${response.message}`, 'success');
+            
+            // Ricarica la lista colori
+            setTimeout(() => {
+                refreshColorList();
+            }, 500);
+        },
+        error: function(xhr, status, error) {
+            console.error('Errore ottimizzazione con blocchi:', xhr);
+            
+            let errorMsg = 'Errore durante l\'ottimizzazione';
+            if (xhr.responseJSON && xhr.responseJSON.error) {
+                errorMsg = xhr.responseJSON.error;
+            } else if (status === 'timeout') {
+                errorMsg = 'Timeout: l\'ottimizzazione sta richiedendo troppo tempo';
+            }
+            
+            showNotification(errorMsg, 'error');
+        },
+        complete: function() {
+            // Ripristina bottone
+            btnText.text('Ottimizza con Blocchi');
+            spinner.addClass('d-none');
+            btn.prop('disabled', false);
+        }
+    });
+}
+
+// Funzione per sbloccare tutti i colori
+function clearAllLocks() {
+    const lockedCount = colorsList.filter(c => c.locked).length;
+    
+    if (lockedCount === 0) {
+        showNotification('Nessun colore è attualmente bloccato', 'info');
+        return;
+    }
+    
+    if (!confirm(`Sbloccare tutti i ${lockedCount} colori bloccati?`)) {
+        return;
+    }
+    
+    // Sblocca tutti i colori uno per uno
+    const promises = [];
+    colorsList.forEach((color, index) => {
+        if (color.locked) {
+            const promise = $.ajax({
+                url: `/api/cabin/${cabinId}/colors/${index}/lock`,
+                method: 'PUT',
+                contentType: 'application/json',
+                data: JSON.stringify({ locked: false })
+            });
+            promises.push(promise);
+        }
+    });
+    
+    Promise.all(promises)
+        .then(() => {
+            showNotification(`Tutti i ${lockedCount} colori sono stati sbloccati`, 'success');
+            refreshColorList();
+        })
+        .catch(() => {
+            showNotification('Errore durante lo sblocco di alcuni colori', 'error');
+            refreshColorList();
+        });
+}
+
+// Funzione per mostrare info sui blocchi
+function showLockInfo() {
+    const totalColors = colorsList.length;
+    const lockedColors = colorsList.filter(c => c.locked).length;
+    const freeColors = totalColors - lockedColors;
+    
+    // Raggruppa per cluster
+    const clusterStats = {};
+    colorsList.forEach(color => {
+        const cluster = color.cluster || 'Senza cluster';
+        if (!clusterStats[cluster]) {
+            clusterStats[cluster] = { total: 0, locked: 0 };
+        }
+        clusterStats[cluster].total++;
+        if (color.locked) {
+            clusterStats[cluster].locked++;
+        }
+    });
+    
+    let message = `📊 **Stato Blocchi:**\n\n`;
+    message += `🎨 Colori totali: ${totalColors}\n`;
+    message += `🔒 Colori bloccati: ${lockedColors}\n`;
+    message += `🔓 Colori liberi: ${freeColors}\n\n`;
+    
+    message += `📋 **Dettaglio per cluster:**\n`;
+    Object.entries(clusterStats).forEach(([cluster, stats]) => {
+        const percentage = Math.round((stats.locked / stats.total) * 100);
+        message += `• ${cluster}: ${stats.locked}/${stats.total} bloccati (${percentage}%)\n`;
+    });
+    
+    alert(message);
+}
+
+// Funzione per aggiornare statistiche blocchi
+function updateLockStats() {
+    const lockedCount = colorsList.filter(c => c.locked).length;
+    const totalCount = colorsList.length;
+    
+    // Aggiorna contatori se esistono elementi dedicati
+    const lockStatsElement = document.getElementById('lockStats');
+    if (lockStatsElement) {
+        lockStatsElement.textContent = `${lockedCount}/${totalCount} bloccati`;
+    }
+    
+    console.log(`Lock stats: ${lockedCount}/${totalCount} colori bloccati`);
+}
+
+// Funzione di utilità per mostrare notifiche
+function showNotification(message, type = 'info') {
+    // Prova prima a usare l'elemento syncMessage direttamente
+    const syncElement = document.getElementById('syncMessage');
+    
+    if (syncElement) {
+        const typeClasses = {
+            'success': 'alert-success',
+            'info': 'alert-info',
+            'warning': 'alert-warning',
+            'error': 'alert-danger'
+        };
+        
+        const icons = {
+            'success': '✅',
+            'error': '❌',
+            'warning': '⚠️',
+            'info': 'ℹ️'
+        };
+        
+        syncElement.className = `alert alert-sm mb-2 ${typeClasses[type] || 'alert-info'}`;
+        syncElement.textContent = `${icons[type]} ${message}`;
+        syncElement.style.display = 'block';
+        
+        // Nascondi automaticamente dopo 5 secondi
+        setTimeout(() => {
+            syncElement.style.display = 'none';
+        }, 5000);
+    } else {
+        // Fallback con console.log per debug
+        console.log(`Notification: ${message} (type: ${type})`);
+    }
+}
+
+// === ESPORTAZIONE EXCEL CABINA ===
+
+// Esporta i colori della cabina in formato Excel
+function exportCabinToExcel() {
+    if (!colorsList || colorsList.length === 0) {
+        alert('Nessun colore da esportare');
+        return;
+    }
+    
+    // Prepara i dati per l'esportazione
+    const exportData = prepareCabinExportData(colorsList);
+    
+    if (exportData.length === 0) {
+        alert('Nessun dato da esportare');
+        return;
+    }
+    
+    // Crea il workbook
+    const wb = XLSX.utils.book_new();
+    const ws = XLSX.utils.aoa_to_sheet(exportData);
+    
+    // Aggiungi il worksheet al workbook
+    XLSX.utils.book_append_sheet(wb, ws, `Cabina ${cabinId}`);
+    
+    // Genera il nome del file con timestamp
+    const now = new Date();
+    const cabinType = cabinId === 1 ? 'corto' : 'lungo';
+    const filename = `cabina_${cabinId}_${cabinType}_${now.getFullYear()}${(now.getMonth()+1).toString().padStart(2,'0')}${now.getDate().toString().padStart(2,'0')}_${now.getHours().toString().padStart(2,'0')}${now.getMinutes().toString().padStart(2,'0')}.xlsx`;
+    
+    // Scarica il file
+    XLSX.writeFile(wb, filename);
+}
+
+// Prepara i dati della cabina per l'esportazione nel formato richiesto
+function prepareCabinExportData(colors) {
+    // Header del file Excel
+    const data = [
+        ['Colore', 'SeqE', 'LineaE', 'TipoE', 'SeqK', 'LineaK', 'TipoK', 'SeqF', 'LineaF', 'TipoF']
+    ];
+    
+    // Raggruppa solo colori consecutivi con lo stesso codice
+    const groups = [];
+    let currentGroup = null;
+    
+    colors.forEach(color => {
+        const colorCode = color.color_code;
+        const colorType = color.color_type;
+        const sequence = color.final_sequence || color.sequence || color.input_sequence || '';
+        
+        // Se è lo stesso colore E stesso tipo del gruppo corrente, aggiungilo
+        if (currentGroup && currentGroup.colorCode === colorCode && currentGroup.lastType === colorType) {
+            // Aggiungi alla categoria appropriata del gruppo corrente
+            if (colorType === 'E' || colorType === 'R' || colorType === 'RE') {
+                if (currentGroup.E.seq) {
+                    currentGroup.E.seq += ';' + sequence;
+                    currentGroup.E.tipo += ';' + colorType;
+                } else {
+                    currentGroup.E.seq = sequence;
+                    currentGroup.E.tipo = colorType;
+                }
+            } else if (colorType === 'K') {
+                if (currentGroup.K.seq) {
+                    currentGroup.K.seq += ';' + sequence;
+                    currentGroup.K.tipo += ';' + colorType;
+                } else {
+                    currentGroup.K.seq = sequence;
+                    currentGroup.K.tipo = colorType;
+                }
+            } else if (colorType === 'F') {
+                if (currentGroup.F.seq) {
+                    currentGroup.F.seq += ';' + sequence;
+                    currentGroup.F.tipo += ';' + colorType;
+                } else {
+                    currentGroup.F.seq = sequence;
+                    currentGroup.F.tipo = colorType;
+                }
+            }
+        } else {
+            // Colore diverso, tipo diverso, o primo colore: crea un nuovo gruppo
+            if (currentGroup) {
+                groups.push(currentGroup);
+            }
+            
+            currentGroup = {
+                colorCode: colorCode,
+                lastType: colorType, // Memorizza l'ultimo tipo per il confronto
+                E: { seq: '', tipo: '' },
+                K: { seq: '', tipo: '' },
+                F: { seq: '', tipo: '' }
+            };
+            
+            // Aggiungi il colore corrente al nuovo gruppo
+            if (colorType === 'E' || colorType === 'R' || colorType === 'RE') {
+                currentGroup.E.seq = sequence;
+                currentGroup.E.tipo = colorType;
+            } else if (colorType === 'K') {
+                currentGroup.K.seq = sequence;
+                currentGroup.K.tipo = colorType;
+            } else if (colorType === 'F') {
+                currentGroup.F.seq = sequence;
+                currentGroup.F.tipo = colorType;
+            }
+        }
+    });
+    
+    // Aggiungi l'ultimo gruppo
+    if (currentGroup) {
+        groups.push(currentGroup);
+    }
+    
+    // Converte i gruppi in righe per Excel
+    groups.forEach(group => {
+        const row = [
+            group.colorCode,
+            group.E.seq, '', group.E.tipo,  // Estetico/Reintegro
+            group.K.seq, '', group.K.tipo,  // Kit
+            group.F.seq, '', group.F.tipo   // Fisso
+        ];
+        data.push(row);
+    });
+    
+    return data;
+}
+
+// ...existing code...
+</script>
+{% endblock %}

@@ -1,0 +1,25 @@
+{
+  "colors": [
+    {
+      "code": "RAL1019",
+      "type": "R",
+      "CH": 2.5,
+      "lunghezza_ordine": "corto"
+    },
+    {
+      "code": "RAL1007",
+      "type": "F",
+      "CH": 4.1,
+      "lunghezza_ordine": "corto"
+    }
+  ],
+  "partial_cluster_order": [
+    {
+      "cluster": "Giallo",
+      "position": 0,
+      "locked": false
+    }
+  ],
+  "cabin_id": 1,
+  "prioritized_reintegrations": []
+}
