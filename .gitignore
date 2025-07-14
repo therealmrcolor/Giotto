@@ -1,3 +1,37 @@
 .DS_Store
 __pycache__/
 backend/.coverage
+
+# macOS system files
+Icon?
+Icon
+**/Icon?
+**/Icon
+.DS_Store?
+.DS_Store
+**/.DS_Store
+**/.DS_Store?
+
+# Temporary files
+.vscode/settings.json
+.vscode/launch.json
+
+# Python
+*.pyc
+*.pyo
+*.egg-info/
+dist/
+build/
+
+# Logs
+*.log
+logs/
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
+
+# Environment variables
+.env
+.env.local
