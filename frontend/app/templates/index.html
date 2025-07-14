@@ -120,6 +120,22 @@
     box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25);
 }
 
+.bulk-input-table .form-control.is-valid {
+    border-color: #198754;
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 8 8'%3e%3cpath fill='%23198754' d='m2.3 6.73.8-.8-.8-.8L1.5 6l.8.73zm1.48-.5L1.5 4l-.8.8 1.28 1.23 3.2-3.2-.8-.8-2.4 2.4z'/%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: right calc(0.375em + 0.1875rem) center;
+    background-size: calc(0.75em + 0.375rem) calc(0.75em + 0.375rem);
+}
+
+.bulk-input-table .form-control.is-warning {
+    border-color: #ffc107;
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 8 8'%3e%3cpath fill='%23ffc107' d='M4 1L1 7h6L4 1z'/%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: right calc(0.375em + 0.1875rem) center;
+    background-size: calc(0.75em + 0.375rem) calc(0.75em + 0.375rem);
+}
+
 .bulk-input-table .form-select {
     border: 1px solid #ced4da;
     border-radius: 0.375rem;
@@ -134,6 +150,64 @@
 
 .bulk-input-table tr:hover {
     background-color: #f1f3f4;
+}
+
+/* Stili per messaggi bulk */
+.bulk-message {
+    margin-bottom: 1rem;
+    border-radius: 0.5rem;
+}
+
+.bulk-message small {
+    margin: 0;
+    font-weight: 500;
+}
+
+/* Highlight per paste multiplo */
+.bulk-color-input.highlight-paste {
+    background-color: #fff3cd !important;
+    border-color: #ffc107 !important;
+    animation: highlightFade 2s ease-out;
+}
+
+.bulk-input-table .form-select.highlight-paste {
+    background-color: #d1ecf1 !important;
+    border-color: #17a2b8 !important;
+    animation: highlightFade 2s ease-out;
+}
+
+.bulk-input-table .auto-filled {
+    position: relative;
+}
+
+.bulk-input-table .auto-filled::after {
+    content: "🤖";
+    position: absolute;
+    right: 5px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 0.8rem;
+    pointer-events: none;
+}
+
+@keyframes highlightFade {
+    0% {
+        background-color: #fff3cd;
+        border-color: #ffc107;
+    }
+    100% {
+        background-color: #ffffff;
+        border-color: #ced4da;
+    }
+}
+
+/* Miglioramenti per tooltips */
+.bulk-input-table .form-control[title] {
+    cursor: help;
+}
+
+.text-warning {
+    font-size: 0.75rem;
 }
 </style>
 {% endblock %}
@@ -188,28 +262,48 @@
                 </div>
                 
                 <div class="row mb-3">
-                    <div class="col-md-12 d-flex align-items-end justify-content-end">
-                        <button type="button" class="btn btn-outline-primary me-2" onclick="addBulkRow()">
-                            <i class="fas fa-plus me-2"></i>Aggiungi Riga
-                        </button>
-                        <button type="button" class="btn btn-success me-2" onclick="processBulkInput()">
-                            <i class="fas fa-cogs me-2"></i><span class="btn-text-bulk">Ottimizza Colori</span>
-                            <span class="spinner-border spinner-border-sm d-none" role="status"></span>
-                        </button>
-                        <button type="button" class="btn btn-outline-secondary" onclick="clearBulkTable()">
-                            <i class="fas fa-broom me-2"></i>Pulisci Tabella
-                        </button>
+                    <div class="col-md-12 d-flex align-items-end justify-content-between">
+                        <div>
+                            <button type="button" class="btn btn-outline-primary me-2" onclick="addBulkRow()">
+                                <i class="fas fa-plus me-2"></i>Aggiungi Riga
+                            </button>
+                            <button type="button" class="btn btn-outline-info me-2" onclick="fillDefaultTypes()">
+                                <i class="fas fa-magic me-2"></i>Auto-Tipo
+                            </button>
+                            <button type="button" class="btn btn-outline-secondary" onclick="clearBulkTable()">
+                                <i class="fas fa-broom me-2"></i>Pulisci Tabella
+                            </button>
+                        </div>
+                        <div>
+                            <button type="button" class="btn btn-success" onclick="processBulkInput()">
+                                <i class="fas fa-cogs me-2"></i><span class="btn-text-bulk">Ottimizza Colori</span>
+                                <span class="spinner-border spinner-border-sm d-none" role="status"></span>
+                            </button>
+                        </div>
                     </div>
+                </div>
+                
+                <div class="alert alert-info">
+                    <small>
+                        <i class="fas fa-lightbulb me-2"></i>
+                        <strong>Tip:</strong> Puoi incollare una lista di codici colore in qualsiasi cella "Colore" della tabella. Se incolli più righe (es. da Excel), verranno create automaticamente nuove righe per ogni codice.
+                        <br><strong>Esempio:</strong> Copia da Excel o da un elenco:
+                        <br><code>RAL9005<br>RAL9001<br>RAL8005</code>
+                        <br>e incollalo in una cella per creare 3 righe automaticamente!
+                    </small>
+                    <button type="button" class="btn btn-outline-primary btn-sm mt-2" onclick="insertTestCodes()">
+                        <i class="fas fa-flask me-2"></i>Test: Inserisci Codici di Esempio
+                    </button>
                 </div>
                 
                 <div class="table-responsive">
                     <table class="table table-bordered bulk-input-table">
                         <thead>
                             <tr>
-                                <th>Colore</th>
-                                <th>Tipologia</th>
-                                <th>Sequenza</th>
-                                <th>Azioni</th>
+                                <th style="width: 35%;">Colore</th>
+                                <th style="width: 30%;">Tipologia</th>
+                                <th style="width: 20%;">Sequenza</th>
+                                <th style="width: 15%;">Azioni</th>
                             </tr>
                         </thead>
                         <tbody id="bulkInputBody">
@@ -259,12 +353,16 @@
         <div class="card">
             <div class="card-header bg-primary text-white">
                 <h5 class="card-title mb-0">
-                    <i class="fas fa-upload me-2"></i>
-                    Carica Lista Colori (JSON)
+                    <button class="btn btn-link text-white p-0 text-decoration-none w-100 text-start" type="button" data-bs-toggle="collapse" data-bs-target="#jsonFormCollapse" aria-expanded="false" aria-controls="jsonFormCollapse">
+                        <i class="fas fa-upload me-2"></i>
+                        Carica Lista Colori (JSON)
+                        <i class="fas fa-chevron-down float-end mt-1" id="jsonToggleIcon"></i>
+                    </button>
                 </h5>
             </div>
-            <div class="card-body">
-                <form id="optimizationForm">
+            <div class="collapse" id="jsonFormCollapse">
+                <div class="card-body">
+                    <form id="optimizationForm">
                     <div class="mb-3">
                         <label for="colorsJson" class="form-label">Lista Colori (formato JSON)</label>
                         <textarea class="form-control json-editor" id="colorsJson" name="colorsJson" rows="8" placeholder='[
@@ -330,6 +428,7 @@
                         </div>
                     </div>
                 </form>
+                </div>
             </div>
         </div>
     </div>
@@ -800,17 +899,24 @@ let bulkRowCounter = 0;
 
 // Inizializza tabella bulk con una riga vuota
 function initBulkTable() {
+    // Pulisci la tabella se ci sono già delle righe
+    $('#bulkInputBody').empty();
+    bulkRowCounter = 0;
+    
+    // Aggiungi la prima riga
     addBulkRow();
+    
+    console.log('Tabella bulk inizializzata con funzionalità paste multiplo');
 }
 
 // Aggiungi una nuova riga alla tabella bulk
-function addBulkRow() {
+function addBulkRow(colorCode = '') {
     bulkRowCounter++;
     const tbody = $('#bulkInputBody');
     const row = $(`
         <tr id="bulkRow${bulkRowCounter}">
             <td>
-                <input type="text" class="form-control" id="bulkColor${bulkRowCounter}" placeholder="es. RAL9005">
+                <input type="text" class="form-control bulk-color-input" id="bulkColor${bulkRowCounter}" placeholder="es. RAL9005" value="${colorCode}">
             </td>
             <td>
                 <select class="form-select" id="bulkType${bulkRowCounter}">
@@ -833,6 +939,12 @@ function addBulkRow() {
         </tr>
     `);
     tbody.append(row);
+    
+    // Aggiungi event listener per il paste a TUTTI gli input dei codici colore
+    const input = $(`#bulkColor${bulkRowCounter}`);
+    setupPasteHandler(input);
+    
+    return bulkRowCounter;
 }
 
 // Rimuovi una riga dalla tabella bulk
@@ -851,6 +963,133 @@ function clearBulkTable() {
     $('#bulkInputBody').empty();
     bulkRowCounter = 0;
     addBulkRow();
+}
+
+// Configura il gestore di paste per input veloce
+function setupPasteHandler(input) {
+    input.on('paste', function(e) {
+        // Previeni il comportamento di default del paste
+        e.preventDefault();
+        
+        // Ottieni il contenuto dalla clipboard
+        const clipboardData = e.originalEvent.clipboardData || window.clipboardData;
+        const pastedText = clipboardData.getData('text/plain').trim();
+        
+        console.log('Paste rilevato:', pastedText);
+        
+        // Controlla se il testo contiene più righe
+        const lines = pastedText.split(/[\n\r]+/).map(line => line.trim()).filter(line => line);
+        
+        if (lines.length > 1) {
+            // Paste multiplo: gestisci le righe separate
+            handleMultiLinePaste($(this), lines);
+        } else {
+            // Paste singolo: inserisci normalmente
+            $(this).val(pastedText);
+        }
+    });
+}
+
+// Gestisce il paste di più righe di codici colore
+function handleMultiLinePaste(input, lines) {
+    console.log('Gestendo paste multiplo:', lines);
+    
+    // Inserisci il primo codice nell'input corrente
+    const firstCode = lines[0];
+    input.val(firstCode);
+    
+    // Crea righe aggiuntive per i codici rimanenti
+    const tbody = $('#bulkInputBody');
+    const currentRowId = input.attr('id').replace('bulkColor', '');
+    
+    // Rimuovi tutte le righe vuote successive a quella corrente
+    tbody.find('tr').each(function() {
+        const rowId = $(this).attr('id').replace('bulkRow', '');
+        if (parseInt(rowId) > parseInt(currentRowId)) {
+            const colorInput = $(this).find('.bulk-color-input');
+            if (!colorInput.val().trim()) {
+                $(this).remove();
+            }
+        }
+    });
+    
+    // Aggiungi nuove righe per ogni codice rimanente
+    for (let i = 1; i < lines.length; i++) {
+        const colorCode = lines[i];
+        if (colorCode) {
+            addBulkRow(colorCode);
+        }
+    }
+    
+    // Mostra un messaggio di conferma
+    showBulkMessage(`✅ Aggiunti ${lines.length} codici colore automaticamente!`, 'success');
+    
+    // Aggiungi validazione visiva ai nuovi input
+    setTimeout(() => {
+        lines.forEach((code, index) => {
+            const rowNumber = parseInt(currentRowId) + index;
+            const input = $(`#bulkColor${rowNumber}`);
+            if (input.length && isValidColorCode(code)) {
+                input.addClass('is-valid');
+            }
+        });
+    }, 100);
+}
+
+// Mostra messaggi temporanei per l'input bulk
+function showBulkMessage(message, type = 'info') {
+    // Rimuovi messaggi precedenti
+    $('.bulk-message').remove();
+    
+    // Crea il nuovo messaggio
+    const alertClass = type === 'success' ? 'alert-success' : 
+                     type === 'warning' ? 'alert-warning' : 
+                     type === 'error' ? 'alert-danger' : 'alert-info';
+    
+    const messageDiv = $(`
+        <div class="alert ${alertClass} alert-dismissible fade show bulk-message" role="alert">
+            <small>${message}</small>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    `);
+    
+    // Inserisci il messaggio prima della tabella
+    $('.bulk-input-table').parent().before(messageDiv);
+    
+    // Rimuovi automaticamente dopo 5 secondi
+    setTimeout(() => {
+        messageDiv.fadeOut(() => messageDiv.remove());
+    }, 5000);
+}
+
+// Funzione helper per validare codici colore
+function isValidColorCode(code) {
+    // Regex semplice per validare codici colore RAL o numerici
+    const patterns = [
+        /^RAL\d{4}$/i,           // RAL + 4 cifre
+        /^\d{6,8}$/,             // 6-8 cifre numeriche
+        /^[A-Z0-9]{6,10}$/i      // Codici alfanumerici generici
+    ];
+    
+    return patterns.some(pattern => pattern.test(code.trim()));
+}
+
+// Migliora la funzione addBulkRow per includere validazione visiva
+function addBulkRowWithValidation(colorCode = '') {
+    const rowId = addBulkRow(colorCode);
+    
+    // Se è stato fornito un codice, aggiungi validazione visiva
+    if (colorCode) {
+        const input = $(`#bulkColor${rowId}`);
+        if (isValidColorCode(colorCode)) {
+            input.addClass('is-valid');
+        } else {
+            input.addClass('is-warning');
+            input.after('<small class="text-warning">Formato codice non standard</small>');
+        }
+    }
+    
+    return rowId;
 }
 
 // Processa tutti i colori inseriti nella tabella bulk e lancia l'ottimizzazione
@@ -947,6 +1186,87 @@ function handleLengthChange() {
     const lengthSelect = document.getElementById('bulkLengthSelect');
     const selectedLength = lengthSelect.value;
     console.log('Lunghezza selezionata per input veloce:', selectedLength);
+}
+
+// Auto-compila i tipi basandosi sui codici colore
+function fillDefaultTypes() {
+    const tbody = $('#bulkInputBody');
+    let filledCount = 0;
+    
+    tbody.find('tr').each(function() {
+        const rowId = $(this).attr('id');
+        if (!rowId) return;
+        
+        const rowNumber = rowId.replace('bulkRow', '');
+        const colorInput = $(`#bulkColor${rowNumber}`);
+        const typeSelect = $(`#bulkType${rowNumber}`);
+        
+        const colorCode = colorInput.val().trim().toUpperCase();
+        
+        // Solo se il codice è presente e il tipo non è già selezionato
+        if (colorCode && !typeSelect.val()) {
+            let suggestedType = 'E'; // Default: Estetico
+            
+            // Logica per determinare il tipo basandosi sul codice
+            if (colorCode.startsWith('RAL')) {
+                // Codici RAL: principalmente estetici, ma alcuni potrebbero essere fissi
+                const ralNumber = parseInt(colorCode.replace('RAL', ''));
+                if (ralNumber <= 1000) {
+                    suggestedType = 'F'; // Colori base spesso fissi
+                } else if (ralNumber >= 9000) {
+                    suggestedType = 'E'; // Grigi/bianchi/neri spesso estetici
+                } else {
+                    suggestedType = 'E'; // Altri RAL generalmente estetici
+                }
+            } else if (/^\d{8}$/.test(colorCode)) {
+                // Codici a 8 cifre: spesso kit o reintegri
+                suggestedType = 'K';
+            } else if (/^\d{6}$/.test(colorCode)) {
+                // Codici a 6 cifre: spesso fissi o kit
+                suggestedType = 'F';
+            } else if (colorCode.length >= 6) {
+                // Altri codici lunghi: spesso kit
+                suggestedType = 'K';
+            }
+            
+            typeSelect.val(suggestedType);
+            typeSelect.addClass('auto-filled');
+            filledCount++;
+        }
+    });
+    
+    if (filledCount > 0) {
+        showBulkMessage(`🤖 Auto-compilati ${filledCount} tipi di colore! Verifica e modifica se necessario.`, 'info');
+        
+        // Aggiungi highlight temporaneo ai campi auto-compilati
+        $('.auto-filled').addClass('highlight-paste');
+        setTimeout(() => {
+            $('.auto-filled').removeClass('highlight-paste auto-filled');
+        }, 3000);
+    } else {
+        showBulkMessage('⚠️ Nessun tipo auto-compilato. Assicurati di aver inserito dei codici colore.', 'warning');
+    }
+}
+
+// Funzione per testare il paste multiplo con codici di esempio
+function insertTestCodes() {
+    const testCodes = [
+        'RAL9005',
+        'RAL9001', 
+        'RAL8005',
+        'RAL9004',
+        'RAL9008'
+    ];
+    
+    // Pulisci la tabella prima
+    clearBulkTable();
+    
+    // Simula un paste multiplo nella prima riga
+    const firstInput = $('#bulkColor1');
+    if (firstInput.length) {
+        handleMultiLinePaste(firstInput, testCodes);
+        showBulkMessage('🧪 Inseriti codici di test per dimostrare il paste multiplo!', 'info');
+    }
 }
 
 // === ESPORTAZIONE EXCEL ===
@@ -1101,6 +1421,15 @@ function prepareExportData(results) {
 // Inizializza la tabella bulk quando la pagina è pronta
 $(document).ready(function() {
     initBulkTable();
+    
+    // Gestisce l'icona di toggle per la sezione JSON
+    $('#jsonFormCollapse').on('show.bs.collapse', function () {
+        $('#jsonToggleIcon').removeClass('fa-chevron-down').addClass('fa-chevron-up');
+    });
+    
+    $('#jsonFormCollapse').on('hide.bs.collapse', function () {
+        $('#jsonToggleIcon').removeClass('fa-chevron-up').addClass('fa-chevron-down');
+    });
 });
 </script>
 {% endblock %}
