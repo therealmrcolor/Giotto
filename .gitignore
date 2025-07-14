@@ -27,11 +27,6 @@ build/
 *.log
 logs/
 
-# Database
-*.db
-*.sqlite
-*.sqlite3
-
 # Environment variables
 .env
 .env.local
