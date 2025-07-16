@@ -1628,7 +1628,7 @@ def update_transition_weight():
 @app.route('/')
 def home():
     """Pagina principale del sistema di ottimizzazione colori."""
-    return render_template('home.html')
+    return render_template('index.html')
 
 @app.route('/cabin/<int:cabin_id>')
 def cabin_view(cabin_id):
