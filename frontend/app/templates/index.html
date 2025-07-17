@@ -949,7 +949,45 @@ function addBulkRow(colorCode = '') {
             </td>
         </tr>
     `);
-    tbody.append(row);
+    tbody.prepend(row);
+    
+    // Aggiungi event listener per il paste a TUTTI gli input dei codici colore
+    const input = $(`#bulkColor${bulkRowCounter}`);
+    setupPasteHandler(input);
+    
+    return bulkRowCounter;
+}
+
+// Aggiungi una nuova riga dopo una riga specifica (per paste multiplo)
+function addBulkRowAfter(afterRowId, colorCode = '') {
+    bulkRowCounter++;
+    const afterRow = $(`#bulkRow${afterRowId}`);
+    const row = $(`
+        <tr id="bulkRow${bulkRowCounter}">
+            <td>
+                <input type="text" class="form-control bulk-color-input" id="bulkColor${bulkRowCounter}" placeholder="es. RAL9005" value="${colorCode}">
+            </td>
+            <td>
+                <select class="form-select" id="bulkType${bulkRowCounter}">
+                    <option value="">Seleziona</option>
+                    <option value="R">R - Reintegro Urgente</option>
+                    <option value="RE">RE - Reintegro</option>
+                    <option value="F">F - Fisso</option>
+                    <option value="K">K - Kit</option>
+                    <option value="E">E - Estetico</option>
+                </select>
+            </td>
+            <td>
+                <input type="number" class="form-control" id="bulkSequence${bulkRowCounter}" placeholder="1">
+            </td>
+            <td>
+                <button type="button" class="btn btn-sm btn-outline-danger" onclick="removeBulkRow(${bulkRowCounter})">
+                    <i class="fas fa-trash"></i>
+                </button>
+            </td>
+        </tr>
+    `);
+    afterRow.after(row);
     
     // Aggiungi event listener per il paste a TUTTI gli input dei codici colore
     const input = $(`#bulkColor${bulkRowCounter}`);
@@ -1081,9 +1119,11 @@ function handleCSVPaste(input, lines) {
     }
     
     // Crea nuove righe per i dati rimanenti
+    let lastRowId = parseInt(currentRowId);
     for (let i = 1; i < processedData.length; i++) {
         const data = processedData[i];
-        const newRowId = addBulkRow(data.code);
+        const newRowId = addBulkRowAfter(lastRowId, data.code);
+        lastRowId = newRowId;
         
         // Popola tipologia e sequenza
         setTimeout(() => {
@@ -1133,10 +1173,12 @@ function handleSimplePaste(input, lines) {
     });
     
     // Aggiungi nuove righe per ogni codice rimanente
+    let lastRowId = parseInt(currentRowId);
     for (let i = 1; i < lines.length; i++) {
         const colorCode = lines[i];
         if (colorCode) {
-            addBulkRow(colorCode);
+            const newRowId = addBulkRowAfter(lastRowId, colorCode);
+            lastRowId = newRowId;
         }
     }
     
