@@ -286,14 +286,25 @@
                 <div class="alert alert-info">
                     <small>
                         <i class="fas fa-lightbulb me-2"></i>
-                        <strong>Tip:</strong> Puoi incollare una lista di codici colore in qualsiasi cella "Colore" della tabella. Se incolli più righe (es. da Excel), verranno create automaticamente nuove righe per ogni codice.
-                        <br><strong>Esempio:</strong> Copia da Excel o da un elenco:
+                        <strong>Tip:</strong> Puoi incollare dati in qualsiasi cella "Colore" della tabella in due formati:
+                        <br><strong>Formato semplice (solo codici):</strong>
                         <br><code>RAL9005<br>RAL9001<br>RAL8005</code>
-                        <br>e incollalo in una cella per creare 3 righe automaticamente!
+                        <br><strong>Formato CSV completo (Codice,Tipologia,Sequenza):</strong>
+                        <br><code>RAL8005,R,1<br>RAL9001,E,1<br>RAL9004,E,2</code>
+                        <br>Il sistema riconoscerà automaticamente il formato e compilerà tutti i campi!
                     </small>
-                    <button type="button" class="btn btn-outline-primary btn-sm mt-2" onclick="insertTestCodes()">
-                        <i class="fas fa-flask me-2"></i>Test: Inserisci Codici di Esempio
-                    </button>
+                    <div class="row mt-2">
+                        <div class="col-md-6">
+                            <button type="button" class="btn btn-outline-primary btn-sm w-100" onclick="insertTestCodes()">
+                                <i class="fas fa-flask me-2"></i>Test: Codici Semplici
+                            </button>
+                        </div>
+                        <div class="col-md-6">
+                            <button type="button" class="btn btn-outline-success btn-sm w-100" onclick="insertTestCSV()">
+                                <i class="fas fa-table me-2"></i>Test: Formato CSV
+                            </button>
+                        </div>
+                    </div>
                 </div>
                 
                 <div class="table-responsive">
@@ -994,6 +1005,114 @@ function setupPasteHandler(input) {
 function handleMultiLinePaste(input, lines) {
     console.log('Gestendo paste multiplo:', lines);
     
+    // Determina se i dati sono in formato CSV (Codice,Tipologia,Sequenza)
+    const isCSVFormat = lines.some(line => line.includes(',') && line.split(',').length >= 2);
+    
+    if (isCSVFormat) {
+        handleCSVPaste(input, lines);
+    } else {
+        handleSimplePaste(input, lines);
+    }
+}
+
+// Gestisce il paste di dati in formato CSV (Codice,Tipologia,Sequenza)
+function handleCSVPaste(input, lines) {
+    console.log('Gestendo paste CSV:', lines);
+    
+    const tbody = $('#bulkInputBody');
+    const currentRowId = input.attr('id').replace('bulkColor', '');
+    let validRows = 0;
+    let processedData = [];
+    
+    // Analizza ogni riga CSV
+    lines.forEach((line, index) => {
+        const trimmedLine = line.trim();
+        if (!trimmedLine) return;
+        
+        const parts = trimmedLine.split(',').map(part => part.trim());
+        if (parts.length >= 2) {
+            const colorCode = parts[0];
+            const colorType = parts[1];
+            const colorSequence = parts.length >= 3 ? parts[2] : '';
+            
+            if (colorCode && colorType) {
+                processedData.push({
+                    code: colorCode,
+                    type: colorType,
+                    sequence: colorSequence,
+                    index: index
+                });
+                validRows++;
+            }
+        }
+    });
+    
+    if (processedData.length === 0) {
+        showBulkMessage('⚠️ Formato CSV non valido. Usa: Codice,Tipologia,Sequenza', 'warning');
+        return;
+    }
+    
+    // Rimuovi righe vuote successive
+    tbody.find('tr').each(function() {
+        const rowId = $(this).attr('id').replace('bulkRow', '');
+        if (parseInt(rowId) > parseInt(currentRowId)) {
+            const colorInput = $(this).find('.bulk-color-input');
+            if (!colorInput.val().trim()) {
+                $(this).remove();
+            }
+        }
+    });
+    
+    // Popola la prima riga corrente
+    if (processedData.length > 0) {
+        const firstData = processedData[0];
+        input.val(firstData.code);
+        $(`#bulkType${currentRowId}`).val(firstData.type);
+        if (firstData.sequence) {
+            $(`#bulkSequence${currentRowId}`).val(firstData.sequence);
+        }
+        
+        // Aggiungi evidenziazione
+        input.addClass('highlight-paste');
+        $(`#bulkType${currentRowId}`).addClass('highlight-paste');
+        if (firstData.sequence) {
+            $(`#bulkSequence${currentRowId}`).addClass('highlight-paste');
+        }
+    }
+    
+    // Crea nuove righe per i dati rimanenti
+    for (let i = 1; i < processedData.length; i++) {
+        const data = processedData[i];
+        const newRowId = addBulkRow(data.code);
+        
+        // Popola tipologia e sequenza
+        setTimeout(() => {
+            $(`#bulkType${newRowId}`).val(data.type);
+            if (data.sequence) {
+                $(`#bulkSequence${newRowId}`).val(data.sequence);
+            }
+            
+            // Aggiungi evidenziazione
+            $(`#bulkColor${newRowId}`).addClass('highlight-paste');
+            $(`#bulkType${newRowId}`).addClass('highlight-paste');
+            if (data.sequence) {
+                $(`#bulkSequence${newRowId}`).addClass('highlight-paste');
+            }
+        }, 50);
+    }
+    
+    showBulkMessage(`✅ Importati ${validRows} colori con tipologia e sequenza dal formato CSV!`, 'success');
+    
+    // Rimuovi evidenziazione dopo 3 secondi
+    setTimeout(() => {
+        $('.highlight-paste').removeClass('highlight-paste');
+    }, 3000);
+}
+
+// Gestisce il paste semplice (solo codici colore)
+function handleSimplePaste(input, lines) {
+    console.log('Gestendo paste semplice:', lines);
+    
     // Inserisci il primo codice nell'input corrente
     const firstCode = lines[0];
     input.val(firstCode);
@@ -1265,7 +1384,30 @@ function insertTestCodes() {
     const firstInput = $('#bulkColor1');
     if (firstInput.length) {
         handleMultiLinePaste(firstInput, testCodes);
-        showBulkMessage('🧪 Inseriti codici di test per dimostrare il paste multiplo!', 'info');
+        showBulkMessage('🧪 Inseriti codici di test per dimostrare il paste semplice!', 'info');
+    }
+}
+
+// Funzione per testare il paste CSV con dati completi
+function insertTestCSV() {
+    const testCSV = [
+        'RAL8005,R,1',
+        'RAL8005,E,1',
+        'RAL9001,E,1', 
+        'RAL9004,E,1',
+        'RAL9005,R,1',
+        'RAL9005,E,1',
+        'RAL9008,R,1'
+    ];
+    
+    // Pulisci la tabella prima
+    clearBulkTable();
+    
+    // Simula un paste CSV nella prima riga
+    const firstInput = $('#bulkColor1');
+    if (firstInput.length) {
+        handleMultiLinePaste(firstInput, testCSV);
+        showBulkMessage('🧪 Inseriti dati CSV di test con Codice,Tipologia,Sequenza!', 'success');
     }
 }
 
