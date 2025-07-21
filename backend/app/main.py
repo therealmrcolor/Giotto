@@ -3,21 +3,32 @@
 
 from fastapi import FastAPI, HTTPException, Body, Request
 from fastapi.responses import JSONResponse
+from fastapi.middleware.cors import CORSMiddleware
 from typing import List, Dict, Any, Optional, Union # Assicurati che Optional e Union siano importati
 import traceback # Per logging errori dettagliato
 import json
 
 # Importa modelli e logica
 # Assicurati che i percorsi siano corretti per la tua struttura
-from .models import OptimizationRequest, OptimizationResponse, ColorInput, OptimizedColorOutput, CabinOptimizationResponse
-from .logic import optimize_color_sequence
-from .config import INFINITE_COST
-from . import logic
+from app.models import OptimizationRequest, OptimizationResponse, ColorInput, OptimizedColorOutput, CabinOptimizationResponse
+from app.logic import optimize_color_sequence
+from app.config import INFINITE_COST
+from app import logic
+from app import database
 
 app = FastAPI(
     title="Color Sequence Optimizer API",
     description="API per ottimizzare la sequenza di produzione dei colori.",
     version="1.0.0"
+)
+
+# Configura CORS per permettere richieste dal frontend
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:8080", "http://127.0.0.1:8080", "http://frontend:80"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 # Add validation error handler
@@ -137,29 +148,69 @@ async def optimize_sequence(request: Request, request_data: OptimizationRequest 
         has_cabin_info = any(color.get('lunghezza_ordine') for color in colori_input_dict)
         
         if has_cabin_info:
-            print("Rilevata informazione lunghezza_ordine, utilizzo della logica standard...")
-            # Per ora usiamo la logica standard invece della logica cabine complessa
-            ordered_colors_dict, cluster_seq, cost_num, message = logic.optimize_color_sequence(
-                colori_giorno_input=colori_input_dict,
-                start_cluster_nome=request_data.start_cluster_name,
-                first_color=request_data.first_color,
-                prioritized_reintegrations=request_data.prioritized_reintegrations
+            print("Rilevata informazione lunghezza_ordine, utilizzo della logica con separazione cabine...")
+            
+            # Separa i colori per cabina basandosi su lunghezza_ordine
+            colori_cabin1 = [c for c in colori_input_dict if c.get('lunghezza_ordine') == 'corto']
+            colori_cabin2 = [c for c in colori_input_dict if c.get('lunghezza_ordine') == 'lungo']
+            
+            print(f"Separazione cabine: Cabin1 (corto)={len(colori_cabin1)}, Cabin2 (lungo)={len(colori_cabin2)}")
+            
+            result_cabin1 = None
+            result_cabin2 = None
+            
+            # Ottimizza Cabina 1 se ci sono colori
+            if colori_cabin1:
+                print("Ottimizzando Cabina 1 (corto)...")
+                ordered_colors_1, cluster_seq_1, cost_1, message_1 = logic.optimize_color_sequence(
+                    colori_giorno_input=colori_cabin1,
+                    start_cluster_nome=request_data.start_cluster_name,
+                    first_color=request_data.first_color,
+                    prioritized_reintegrations=request_data.prioritized_reintegrations
+                )
+                
+                # Salva nel database per Cabina 1
+                database.save_optimization_results(ordered_colors_1, cabin_id=1)
+                
+                cost_str_1 = "infinito" if cost_1 >= INFINITE_COST else f"{cost_1:.2f}"
+                result_cabin1 = {
+                    "ordered_colors": [OptimizedColorOutput(**c) for c in ordered_colors_1],
+                    "optimal_cluster_sequence": cluster_seq_1,
+                    "calculated_cost": cost_str_1,
+                    "message": message_1
+                }
+                print(f"Cabina 1 ottimizzata: {len(ordered_colors_1)} colori, costo={cost_str_1}")
+            
+            # Ottimizza Cabina 2 se ci sono colori
+            if colori_cabin2:
+                print("Ottimizzando Cabina 2 (lungo)...")
+                ordered_colors_2, cluster_seq_2, cost_2, message_2 = logic.optimize_color_sequence(
+                    colori_giorno_input=colori_cabin2,
+                    start_cluster_nome=request_data.start_cluster_name,
+                    first_color=request_data.first_color,
+                    prioritized_reintegrations=request_data.prioritized_reintegrations
+                )
+                
+                # Salva nel database per Cabina 2
+                database.save_optimization_results(ordered_colors_2, cabin_id=2)
+                
+                cost_str_2 = "infinito" if cost_2 >= INFINITE_COST else f"{cost_2:.2f}"
+                result_cabin2 = {
+                    "ordered_colors": [OptimizedColorOutput(**c) for c in ordered_colors_2],
+                    "optimal_cluster_sequence": cluster_seq_2,
+                    "calculated_cost": cost_str_2,
+                    "message": message_2
+                }
+                print(f"Cabina 2 ottimizzata: {len(ordered_colors_2)} colori, costo={cost_str_2}")
+            
+            # Restituisci risposta combinata per le cabine
+            response_data = CabinOptimizationResponse(
+                cabina_1=result_cabin1,
+                cabina_2=result_cabin2,
+                message="Ottimizzazione completata per le cabine separate"
             )
             
-            # Converti i dizionari risultato nel modello Pydantic per la risposta
-            ordered_colors_output = [OptimizedColorOutput(**c) for c in ordered_colors_dict]
-            
-            # Gestisce costo infinito per la risposta JSON
-            cost_str = "infinito" if cost_num >= INFINITE_COST else f"{cost_num:.2f}"
-            
-            response_data = OptimizationResponse(
-                ordered_colors=ordered_colors_output,
-                optimal_cluster_sequence=cluster_seq,
-                calculated_cost=cost_str,
-                message=message
-            )
-            
-            print(f"[API] Invio risposta: {len(ordered_colors_output)} colori, {len(cluster_seq)} cluster, costo={cost_str}")
+            print(f"[API] Invio risposta cabine: Cabin1={result_cabin1 is not None}, Cabin2={result_cabin2 is not None}")
             return response_data
             
         # Verifica se ci sono sequenze con sequence_type per usare la nuova logica
@@ -608,3 +659,8 @@ async def apply_cluster_order_to_cabin(cabin_id: int, request_data: dict = Body(
         print(f"Errore durante applicazione ordine cluster cabina {cabin_id}: {e}")
         traceback.print_exc()
         raise HTTPException(status_code=500, detail=f"Errore interno: {str(e)}")
+
+# Avvia il server se il file viene eseguito direttamente
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run(app, host="0.0.0.0", port=8001)

@@ -225,26 +225,19 @@
 <div class="row">
     <!-- Form Input Colori -->
     <div class="col-lg-8">
-        <!-- Input Veloce Colori -->
+        <!-- Input Veloce Colori - Cabina 1 -->
         <div class="card mb-4">
-            <div class="card-header bg-success text-white">
+            <div class="card-header bg-primary text-white">
                 <h5 class="card-title mb-0">
-                    <i class="fas fa-bolt me-2"></i>
-                    Input Veloce Colori
+                    <i class="fas fa-industry me-2"></i>
+                    Cabina 1 - Corto
                 </h5>
             </div>
             <div class="card-body">
                 <div class="row mb-3">
-                    <div class="col-md-4">
-                        <label for="bulkLengthSelect" class="form-label">Lunghezza/Cabina</label>
-                        <select class="form-select" id="bulkLengthSelect" onchange="handleLengthChange()">
-                            <option value="corto">Corto (Cabina 1)</option>
-                            <option value="lungo">Lungo (Cabina 2)</option>
-                        </select>
-                    </div>
-                    <div class="col-md-4">
-                        <label for="bulkStartCluster" class="form-label">Cluster di Partenza</label>
-                        <select class="form-select" id="bulkStartCluster">
+                    <div class="col-md-6">
+                        <label for="cabin1StartCluster" class="form-label">Cluster di Partenza</label>
+                        <select class="form-select" id="cabin1StartCluster">
                             <option value="">-- Automatico --</option>
                             <option value="Bianco">Bianco</option>
                             <option value="Nero">Nero</option>
@@ -254,9 +247,9 @@
                             <option value="Giallo">Giallo</option>
                         </select>
                     </div>
-                    <div class="col-md-4">
-                        <label for="bulkFirstColor" class="form-label">Primo Colore (opzionale)</label>
-                        <input type="text" class="form-control" id="bulkFirstColor" placeholder="es. RAL9005">
+                    <div class="col-md-6">
+                        <label for="cabin1FirstColor" class="form-label">Primo Colore (opzionale)</label>
+                        <input type="text" class="form-control" id="cabin1FirstColor" placeholder="es. RAL9005">
                         <div class="form-text">Primo colore del cluster</div>
                     </div>
                 </div>
@@ -264,29 +257,107 @@
                 <div class="row mb-3">
                     <div class="col-md-12 d-flex align-items-end justify-content-between">
                         <div>
-                            <button type="button" class="btn btn-outline-primary me-2" onclick="addBulkRow()">
+                            <button type="button" class="btn btn-outline-primary me-2" onclick="addBulkRow('cabin1')">
                                 <i class="fas fa-plus me-2"></i>Aggiungi Riga
                             </button>
-                            <button type="button" class="btn btn-outline-info me-2" onclick="fillDefaultTypes()">
+                            <button type="button" class="btn btn-outline-info me-2" onclick="fillDefaultTypes('cabin1')">
                                 <i class="fas fa-magic me-2"></i>Auto-Tipo
                             </button>
-                            <button type="button" class="btn btn-outline-secondary" onclick="clearBulkTable()">
+                            <button type="button" class="btn btn-outline-secondary" onclick="clearBulkTable('cabin1')">
                                 <i class="fas fa-broom me-2"></i>Pulisci Tabella
-                            </button>
-                        </div>
-                        <div>
-                            <button type="button" class="btn btn-success" onclick="processBulkInput()">
-                                <i class="fas fa-cogs me-2"></i><span class="btn-text-bulk">Ottimizza Colori</span>
-                                <span class="spinner-border spinner-border-sm d-none" role="status"></span>
                             </button>
                         </div>
                     </div>
                 </div>
                 
-                <div class="alert alert-info">
+                <div class="table-responsive">
+                    <table class="table table-bordered bulk-input-table">
+                        <thead>
+                            <tr>
+                                <th style="width: 35%;">Colore</th>
+                                <th style="width: 30%;">Tipologia</th>
+                                <th style="width: 20%;">Sequenza</th>
+                                <th style="width: 15%;">Azioni</th>
+                            </tr>
+                        </thead>
+                        <tbody id="cabin1InputBody">
+                            <!-- Le righe verranno aggiunte dinamicamente -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Input Veloce Colori - Cabina 2 -->
+        <div class="card mb-4">
+            <div class="card-header bg-success text-white">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-industry me-2"></i>
+                    Cabina 2 - Lungo
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <label for="cabin2StartCluster" class="form-label">Cluster di Partenza</label>
+                        <select class="form-select" id="cabin2StartCluster">
+                            <option value="">-- Automatico --</option>
+                            <option value="Bianco">Bianco</option>
+                            <option value="Nero">Nero</option>
+                            <option value="Rosso">Rosso</option>
+                            <option value="Blu">Blu</option>
+                            <option value="Verde">Verde</option>
+                            <option value="Giallo">Giallo</option>
+                        </select>
+                    </div>
+                    <div class="col-md-6">
+                        <label for="cabin2FirstColor" class="form-label">Primo Colore (opzionale)</label>
+                        <input type="text" class="form-control" id="cabin2FirstColor" placeholder="es. RAL9005">
+                        <div class="form-text">Primo colore del cluster</div>
+                    </div>
+                </div>
+                
+                <div class="row mb-3">
+                    <div class="col-md-12 d-flex align-items-end justify-content-between">
+                        <div>
+                            <button type="button" class="btn btn-outline-primary me-2" onclick="addBulkRow('cabin2')">
+                                <i class="fas fa-plus me-2"></i>Aggiungi Riga
+                            </button>
+                            <button type="button" class="btn btn-outline-info me-2" onclick="fillDefaultTypes('cabin2')">
+                                <i class="fas fa-magic me-2"></i>Auto-Tipo
+                            </button>
+                            <button type="button" class="btn btn-outline-secondary" onclick="clearBulkTable('cabin2')">
+                                <i class="fas fa-broom me-2"></i>Pulisci Tabella
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="table-responsive">
+                    <table class="table table-bordered bulk-input-table">
+                        <thead>
+                            <tr>
+                                <th style="width: 35%;">Colore</th>
+                                <th style="width: 30%;">Tipologia</th>
+                                <th style="width: 20%;">Sequenza</th>
+                                <th style="width: 15%;">Azioni</th>
+                            </tr>
+                        </thead>
+                        <tbody id="cabin2InputBody">
+                            <!-- Le righe verranno aggiunte dinamicamente -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Pulsante Ottimizzazione Globale -->
+        <div class="card mb-4">
+            <div class="card-body text-center">
+                <div class="alert alert-info mb-3">
                     <small>
                         <i class="fas fa-lightbulb me-2"></i>
-                        <strong>Tip:</strong> Puoi incollare dati in qualsiasi cella "Colore" della tabella in due formati:
+                        <strong>Tip:</strong> Puoi incollare dati in qualsiasi cella "Colore" delle tabelle in due formati:
                         <br><strong>Formato semplice (solo codici):</strong>
                         <br><code>RAL9005<br>RAL9001<br>RAL8005</code>
                         <br><strong>Formato CSV completo (Codice,Tipologia,Sequenza):</strong>
@@ -307,21 +378,12 @@
                     </div>
                 </div>
                 
-                <div class="table-responsive">
-                    <table class="table table-bordered bulk-input-table">
-                        <thead>
-                            <tr>
-                                <th style="width: 35%;">Colore</th>
-                                <th style="width: 30%;">Tipologia</th>
-                                <th style="width: 20%;">Sequenza</th>
-                                <th style="width: 15%;">Azioni</th>
-                            </tr>
-                        </thead>
-                        <tbody id="bulkInputBody">
-                            <!-- Le righe verranno aggiunte dinamicamente -->
-                        </tbody>
-                    </table>
-                </div>
+                <button type="button" class="btn btn-warning btn-lg" onclick="processBothCabins()">
+                    <i class="fas fa-cogs me-2"></i>
+                    <span class="btn-text-bulk">Ottimizza Entrambe le Cabine</span>
+                    <span class="spinner-border spinner-border-sm d-none" role="status"></span>
+                </button>
+                <div class="form-text mt-2">Elabora i colori inseriti in entrambe le cabine</div>
             </div>
         </div>
 
@@ -565,15 +627,89 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 
 <script>
+// Backend URL configuration - detect which URL works
+const DOCKER_BACKEND_URL = "{{ docker_backend_url }}";
+const HOST_BACKEND_URL = "{{ host_backend_url }}";
+let BACKEND_URL = null;
+
+console.log('DEBUG: DOCKER_BACKEND_URL:', DOCKER_BACKEND_URL);
+console.log('DEBUG: HOST_BACKEND_URL:', HOST_BACKEND_URL);
+
+// Function to test backend connectivity
+async function detectBackendUrl() {
+    console.log('DEBUG: Testing backend connectivity...');
+    
+    // First try the Docker internal URL
+    try {
+        const response = await fetch(DOCKER_BACKEND_URL + '/', { method: 'GET', timeout: 2000 });
+        if (response.ok) {
+            BACKEND_URL = DOCKER_BACKEND_URL;
+            console.log('DEBUG: Using Docker backend URL:', BACKEND_URL);
+            return;
+        }
+    } catch (error) {
+        console.log('DEBUG: Docker backend not reachable:', error.message);
+    }
+    
+    // If Docker URL fails, try the host URL
+    try {
+        const response = await fetch(HOST_BACKEND_URL + '/', { method: 'GET', timeout: 2000 });
+        if (response.ok) {
+            BACKEND_URL = HOST_BACKEND_URL;
+            console.log('DEBUG: Using host backend URL:', BACKEND_URL);
+            return;
+        }
+    } catch (error) {
+        console.log('DEBUG: Host backend not reachable:', error.message);
+    }
+    
+    // If both fail, default to host URL and log error
+    BACKEND_URL = HOST_BACKEND_URL;
+    console.error('DEBUG: No backend reachable, defaulting to:', BACKEND_URL);
+}
+
 // Variabili globali per i clusters disponibili e la lista temporanea
 let availableClusters = [];
 let temporaryList = [];
 let lastOptimizationResults = null; // Per esportazione Excel
 
 // Carica i clusters disponibili al caricamento della pagina
-$(document).ready(function() {
+$(document).ready(async function() {
+    console.log('Document ready - Inizializzo il sistema...');
+    console.log('jQuery versione:', $.fn.jquery);
+    console.log('Elementi cabin1InputBody trovati:', $('#cabin1InputBody').length);
+    console.log('Elementi cabin2InputBody trovati:', $('#cabin2InputBody').length);
+    
+    // First detect which backend URL works
+    await detectBackendUrl();
+    console.log('DEBUG: Final BACKEND_URL selected:', BACKEND_URL);
+    
+    // Debug visibile nella pagina
+    $('body').append('<div id="debugInfo" style="position:fixed;top:10px;right:10px;background:yellow;padding:10px;z-index:9999;font-size:12px;"></div>');
+    $('#debugInfo').html(`
+        jQuery: ${$.fn.jquery}<br>
+        cabin1InputBody: ${$('#cabin1InputBody').length}<br>
+        cabin2InputBody: ${$('#cabin2InputBody').length}<br>
+        cabin1RowCounter: ${cabin1RowCounter}<br>
+        cabin2RowCounter: ${cabin2RowCounter}<br>
+        BACKEND_URL: ${BACKEND_URL}
+    `);
+    
+    // Carica clusters e aggiorna stato cabine
     loadAvailableClusters();
     refreshCabinStatus();
+    
+    // Inizializza le tabelle bulk
+    initBulkTable();
+    
+    // Gestisce l'icona di toggle per la sezione JSON
+    $('#jsonFormCollapse').on('show.bs.collapse', function () {
+        $('#jsonToggleIcon').removeClass('fa-chevron-down').addClass('fa-chevron-up');
+    });
+    
+    $('#jsonFormCollapse').on('hide.bs.collapse', function () {
+        $('#jsonToggleIcon').removeClass('fa-chevron-up').addClass('fa-chevron-down');
+    });
 });
 
 // Carica la lista dei clusters disponibili
@@ -773,8 +909,10 @@ $('#optimizationForm').on('submit', function(e) {
     }
     
     // Chiama l'API di ottimizzazione
+    const optimizeUrl = BACKEND_URL + '/optimize';
+    console.log('DEBUG: About to call AJAX with URL:', optimizeUrl);
     $.ajax({
-        url: '/api/optimize',
+        url: optimizeUrl,
         method: 'POST',
         contentType: 'application/json',
         data: JSON.stringify(requestData),
@@ -868,6 +1006,157 @@ function displayOptimizationResults(results) {
     $('#exportButton').show();
 }
 
+// Visualizza i risultati combinati delle due cabine
+function displayCombinedOptimizationResults(results) {
+    // Debug: logga la struttura completa dei risultati
+    console.log('DEBUG: displayCombinedOptimizationResults chiamata con:', results);
+    console.log('DEBUG: results.cabina_1:', results.cabina_1);
+    console.log('DEBUG: results.cabina_2:', results.cabina_2);
+    
+    // Salva i risultati per l'esportazione Excel
+    lastOptimizationResults = results;
+    
+    const container = $('#optimizationResults');
+    container.empty();
+
+    container.append(`
+        <div class="alert alert-info">
+            <h6><i class="fas fa-info-circle me-2"></i>Ottimizzazione completata per entrambe le cabine separatamente</h6>
+            <p class="mb-0">Le cabine sono state ottimizzate indipendentemente per garantire la massima efficienza.</p>
+        </div>
+    `);    // Mostra risultati Cabina 1
+    console.log('DEBUG: Checking cabina_1 conditions...');
+    console.log('DEBUG: results.cabina_1 exists:', !!results.cabina_1);
+    console.log('DEBUG: results.cabina_1.ordered_colors exists:', !!(results.cabina_1 && results.cabina_1.ordered_colors));
+    console.log('DEBUG: results.cabina_1.ordered_colors.length:', results.cabina_1 && results.cabina_1.ordered_colors ? results.cabina_1.ordered_colors.length : 'N/A');
+    
+    if (results.cabina_1 && results.cabina_1.ordered_colors && results.cabina_1.ordered_colors.length > 0) {
+        console.log('DEBUG: Mostrando risultati Cabina 1 con', results.cabina_1.ordered_colors.length, 'colori');
+        container.append(`
+            <div class="alert alert-primary">
+                <h6><i class="fas fa-industry me-2 text-primary"></i>Cabina 1 (Corto)</h6>
+                <p class="mb-1"><strong>Colori ottimizzati:</strong> ${results.cabina_1.ordered_colors.length}</p>
+                <p class="mb-1"><strong>Sequenza cluster:</strong> ${results.cabina_1.optimal_cluster_sequence ? results.cabina_1.optimal_cluster_sequence.join(' → ') : 'N/D'}</p>
+                <p class="mb-0"><strong>Costo calcolato:</strong> ${results.cabina_1.calculated_cost || 'N/D'}</p>
+            </div>
+        `);
+        
+        // Tabella dettagliata per Cabina 1
+        let cabin1Table = `
+            <div class="table-responsive mt-3">
+                <table class="table table-striped table-sm">
+                    <thead class="table-primary">
+                        <tr>
+                            <th>Posizione</th>
+                            <th>Codice Colore</th>
+                            <th>Tipo</th>
+                            <th>Cluster</th>
+                            <th>CH</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+        `;
+        
+        results.cabina_1.ordered_colors.forEach((color, index) => {
+            cabin1Table += `
+                <tr>
+                    <td><strong>${index + 1}</strong></td>
+                    <td><code class="color-code">${color.code}</code></td>
+                    <td><span class="badge bg-primary">${color.type}</span></td>
+                    <td><span class="badge bg-secondary">${color.cluster || 'N/D'}</span></td>
+                    <td>${color.CH || 'N/D'}</td>
+                </tr>
+            `;
+        });
+        
+        cabin1Table += `
+                    </tbody>
+                </table>
+            </div>
+        `;
+        
+        console.log('DEBUG: Aggiungendo tabella Cabina 1:', cabin1Table.substring(0, 200) + '...');
+        container.append(cabin1Table);
+    } else if (results.cabina_1 === null) {
+        console.log('DEBUG: Cabina 1 è null, mostrando messaggio vuoto');
+        container.append(`
+            <div class="alert alert-secondary">
+                <h6><i class="fas fa-industry me-2"></i>Cabina 1 (Corto)</h6>
+                <p class="mb-0">Nessun colore inserito per questa cabina.</p>
+            </div>
+        `);
+    } else {
+        console.log('DEBUG: Cabina 1 non soddisfa le condizioni, saltando...');
+    }
+
+    // Mostra risultati Cabina 2
+    if (results.cabina_2 && results.cabina_2.ordered_colors && results.cabina_2.ordered_colors.length > 0) {
+        container.append(`
+            <div class="alert alert-success">
+                <h6><i class="fas fa-industry me-2 text-success"></i>Cabina 2 (Lungo)</h6>
+                <p class="mb-1"><strong>Colori ottimizzati:</strong> ${results.cabina_2.ordered_colors.length}</p>
+                <p class="mb-1"><strong>Sequenza cluster:</strong> ${results.cabina_2.optimal_cluster_sequence ? results.cabina_2.optimal_cluster_sequence.join(' → ') : 'N/D'}</p>
+                <p class="mb-0"><strong>Costo calcolato:</strong> ${results.cabina_2.calculated_cost || 'N/D'}</p>
+            </div>
+        `);
+        
+        // Tabella dettagliata per Cabina 2
+        let cabin2Table = `
+            <div class="table-responsive mt-3">
+                <table class="table table-striped table-sm">
+                    <thead class="table-success">
+                        <tr>
+                            <th>Posizione</th>
+                            <th>Codice Colore</th>
+                            <th>Tipo</th>
+                            <th>Cluster</th>
+                            <th>CH</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+        `;
+        
+        results.cabina_2.ordered_colors.forEach((color, index) => {
+            cabin2Table += `
+                <tr>
+                    <td><strong>${index + 1}</strong></td>
+                    <td><code class="color-code">${color.code}</code></td>
+                    <td><span class="badge bg-success">${color.type}</span></td>
+                    <td><span class="badge bg-secondary">${color.cluster || 'N/D'}</span></td>
+                    <td>${color.CH || 'N/D'}</td>
+                </tr>
+            `;
+        });
+        
+        cabin2Table += `
+                    </tbody>
+                </table>
+            </div>
+        `;
+        
+        container.append(cabin2Table);
+    } else if (results.cabina_2 === null) {
+        container.append(`
+            <div class="alert alert-secondary">
+                <h6><i class="fas fa-industry me-2"></i>Cabina 2 (Lungo)</h6>
+                <p class="mb-0">Nessun colore inserito per questa cabina.</p>
+            </div>
+        `);
+    }    container.append(`
+        <div class="text-center mt-3">
+            <a href="${window.location.origin}/cabin/1" class="btn btn-primary me-2">
+                <i class="fas fa-eye me-2"></i>Visualizza Cabina 1
+            </a>
+            <a href="${window.location.origin}/cabin/2" class="btn btn-success">
+                <i class="fas fa-eye me-2"></i>Visualizza Cabina 2
+            </a>
+        </div>
+    `);
+    
+    // Mostra il pulsante di esportazione Excel
+    $('#exportButton').show();
+}
+
 // Aggiorna stato cabine
 function refreshCabinStatus() {
     $.get('/api/cabin-status')
@@ -906,31 +1195,48 @@ function clearAllData() {
 
 // === FUNZIONI PER INPUT VELOCE COLORI ===
 
-let bulkRowCounter = 0;
+let cabin1RowCounter = 0;
+let cabin2RowCounter = 0;
 
-// Inizializza tabella bulk con una riga vuota
+// Inizializza le tabelle bulk per entrambe le cabine
 function initBulkTable() {
-    // Pulisci la tabella se ci sono già delle righe
-    $('#bulkInputBody').empty();
-    bulkRowCounter = 0;
+    console.log('initBulkTable: Inizializzo le tabelle per entrambe le cabine...');
     
-    // Aggiungi la prima riga
-    addBulkRow();
+    // Pulisci le tabelle se ci sono già delle righe
+    $('#cabin1InputBody').empty();
+    $('#cabin2InputBody').empty();
+    cabin1RowCounter = 0;
+    cabin2RowCounter = 0;
     
-    console.log('Tabella bulk inizializzata con funzionalità paste multiplo');
+    console.log('initBulkTable: Tabelle pulite, aggiungendo righe iniziali...');
+    
+    // Aggiungi la prima riga per entrambe le cabine
+    const cabin1Id = addBulkRow('cabin1');
+    const cabin2Id = addBulkRow('cabin2');
+    
+    console.log(`initBulkTable: Completato! Cabina 1 riga ${cabin1Id}, Cabina 2 riga ${cabin2Id}`);
+    console.log('Tabelle bulk inizializzate per entrambe le cabine con funzionalità paste multiplo');
 }
 
-// Aggiungi una nuova riga alla tabella bulk
-function addBulkRow(colorCode = '') {
-    bulkRowCounter++;
-    const tbody = $('#bulkInputBody');
+// Aggiungi una nuova riga alla tabella bulk (modificata per supportare entrambe le cabine)
+function addBulkRow(cabinId = 'cabin1', colorCode = '') {
+    console.log(`addBulkRow: Chiamata con cabinId='${cabinId}', colorCode='${colorCode}'`);
+    
+    const iscabin1 = cabinId === 'cabin1';
+    const counter = iscabin1 ? ++cabin1RowCounter : ++cabin2RowCounter;
+    const tbody = iscabin1 ? $('#cabin1InputBody') : $('#cabin2InputBody');
+    const prefix = iscabin1 ? 'cabin1' : 'cabin2';
+    
+    console.log(`addBulkRow: tbody elemento trovato:`, tbody.length > 0);
+    console.log(`addBulkRow: counter = ${counter}, prefix = ${prefix}`);
+    
     const row = $(`
-        <tr id="bulkRow${bulkRowCounter}">
+        <tr id="${prefix}Row${counter}">
             <td>
-                <input type="text" class="form-control bulk-color-input" id="bulkColor${bulkRowCounter}" placeholder="es. RAL9005" value="${colorCode}">
+                <input type="text" class="form-control bulk-color-input" id="${prefix}Color${counter}" placeholder="es. RAL9005" value="${colorCode}">
             </td>
             <td>
-                <select class="form-select" id="bulkType${bulkRowCounter}">
+                <select class="form-select" id="${prefix}Type${counter}">
                     <option value="">Seleziona</option>
                     <option value="R">R - Reintegro Urgente</option>
                     <option value="RE">RE - Reintegro</option>
@@ -940,35 +1246,42 @@ function addBulkRow(colorCode = '') {
                 </select>
             </td>
             <td>
-                <input type="number" class="form-control" id="bulkSequence${bulkRowCounter}" placeholder="1">
+                <input type="number" class="form-control" id="${prefix}Sequence${counter}" placeholder="1">
             </td>
             <td>
-                <button type="button" class="btn btn-sm btn-outline-danger" onclick="removeBulkRow(${bulkRowCounter})">
+                <button type="button" class="btn btn-sm btn-outline-danger" onclick="removeBulkRow('${cabinId}', ${counter})">
                     <i class="fas fa-trash"></i>
                 </button>
             </td>
         </tr>
     `);
+    
+    console.log(`addBulkRow: Aggiungendo riga...`);
     tbody.prepend(row);
     
-    // Aggiungi event listener per il paste a TUTTI gli input dei codici colore
-    const input = $(`#bulkColor${bulkRowCounter}`);
-    setupPasteHandler(input);
+    console.log(`addBulkRow: Riga aggiunta! Righe totali nella tabella:`, tbody.find('tr').length);
     
-    return bulkRowCounter;
+    // Aggiungi event listener per il paste
+    const input = $(`#${prefix}Color${counter}`);
+    setupPasteHandler(input, cabinId);
+    
+    return counter;
 }
 
 // Aggiungi una nuova riga dopo una riga specifica (per paste multiplo)
-function addBulkRowAfter(afterRowId, colorCode = '') {
-    bulkRowCounter++;
-    const afterRow = $(`#bulkRow${afterRowId}`);
+function addBulkRowAfter(cabinId, afterRowId, colorCode = '') {
+    const iscabin1 = cabinId === 'cabin1';
+    const counter = iscabin1 ? ++cabin1RowCounter : ++cabin2RowCounter;
+    const prefix = iscabin1 ? 'cabin1' : 'cabin2';
+    const afterRow = $(`#${prefix}Row${afterRowId}`);
+    
     const row = $(`
-        <tr id="bulkRow${bulkRowCounter}">
+        <tr id="${prefix}Row${counter}">
             <td>
-                <input type="text" class="form-control bulk-color-input" id="bulkColor${bulkRowCounter}" placeholder="es. RAL9005" value="${colorCode}">
+                <input type="text" class="form-control bulk-color-input" id="${prefix}Color${counter}" placeholder="es. RAL9005" value="${colorCode}">
             </td>
             <td>
-                <select class="form-select" id="bulkType${bulkRowCounter}">
+                <select class="form-select" id="${prefix}Type${counter}">
                     <option value="">Seleziona</option>
                     <option value="R">R - Reintegro Urgente</option>
                     <option value="RE">RE - Reintegro</option>
@@ -978,10 +1291,10 @@ function addBulkRowAfter(afterRowId, colorCode = '') {
                 </select>
             </td>
             <td>
-                <input type="number" class="form-control" id="bulkSequence${bulkRowCounter}" placeholder="1">
+                <input type="number" class="form-control" id="${prefix}Sequence${counter}" placeholder="1">
             </td>
             <td>
-                <button type="button" class="btn btn-sm btn-outline-danger" onclick="removeBulkRow(${bulkRowCounter})">
+                <button type="button" class="btn btn-sm btn-outline-danger" onclick="removeBulkRow('${cabinId}', ${counter})">
                     <i class="fas fa-trash"></i>
                 </button>
             </td>
@@ -989,33 +1302,45 @@ function addBulkRowAfter(afterRowId, colorCode = '') {
     `);
     afterRow.after(row);
     
-    // Aggiungi event listener per il paste a TUTTI gli input dei codici colore
-    const input = $(`#bulkColor${bulkRowCounter}`);
-    setupPasteHandler(input);
+    // Aggiungi event listener per il paste
+    const input = $(`#${prefix}Color${counter}`);
+    setupPasteHandler(input, cabinId);
     
-    return bulkRowCounter;
+    return counter;
 }
 
 // Rimuovi una riga dalla tabella bulk
-function removeBulkRow(rowId) {
-    const tbody = $('#bulkInputBody');
-    $(`#bulkRow${rowId}`).remove();
+function removeBulkRow(cabinId, rowId) {
+    const iscabin1 = cabinId === 'cabin1';
+    const tbody = iscabin1 ? $('#cabin1InputBody') : $('#cabin2InputBody');
+    const prefix = iscabin1 ? 'cabin1' : 'cabin2';
+    
+    $(`#${prefix}Row${rowId}`).remove();
     
     // Se non ci sono più righe, aggiungine una vuota
     if (tbody.children().length === 0) {
-        addBulkRow();
+        addBulkRow(cabinId);
     }
 }
 
 // Pulisci la tabella bulk
-function clearBulkTable() {
-    $('#bulkInputBody').empty();
-    bulkRowCounter = 0;
-    addBulkRow();
+function clearBulkTable(cabinId = 'cabin1') {
+    const iscabin1 = cabinId === 'cabin1';
+    const tbody = iscabin1 ? $('#cabin1InputBody') : $('#cabin2InputBody');
+    
+    tbody.empty();
+    
+    if (iscabin1) {
+        cabin1RowCounter = 0;
+    } else {
+        cabin2RowCounter = 0;
+    }
+    
+    addBulkRow(cabinId);
 }
 
 // Configura il gestore di paste per input veloce
-function setupPasteHandler(input) {
+function setupPasteHandler(input, cabinId) {
     input.on('paste', function(e) {
         // Previeni il comportamento di default del paste
         e.preventDefault();
@@ -1024,14 +1349,14 @@ function setupPasteHandler(input) {
         const clipboardData = e.originalEvent.clipboardData || window.clipboardData;
         const pastedText = clipboardData.getData('text/plain').trim();
         
-        console.log('Paste rilevato:', pastedText);
+        console.log('Paste rilevato per', cabinId, ':', pastedText);
         
         // Controlla se il testo contiene più righe
         const lines = pastedText.split(/[\n\r]+/).map(line => line.trim()).filter(line => line);
         
         if (lines.length > 1) {
             // Paste multiplo: gestisci le righe separate
-            handleMultiLinePaste($(this), lines);
+            handleMultiLinePaste($(this), lines, cabinId);
         } else {
             // Paste singolo: inserisci normalmente
             $(this).val(pastedText);
@@ -1040,25 +1365,27 @@ function setupPasteHandler(input) {
 }
 
 // Gestisce il paste di più righe di codici colore
-function handleMultiLinePaste(input, lines) {
-    console.log('Gestendo paste multiplo:', lines);
+function handleMultiLinePaste(input, lines, cabinId) {
+    console.log('Gestendo paste multiplo per', cabinId, ':', lines);
     
     // Determina se i dati sono in formato CSV (Codice,Tipologia,Sequenza)
     const isCSVFormat = lines.some(line => line.includes(',') && line.split(',').length >= 2);
     
     if (isCSVFormat) {
-        handleCSVPaste(input, lines);
+        handleCSVPaste(input, lines, cabinId);
     } else {
-        handleSimplePaste(input, lines);
+        handleSimplePaste(input, lines, cabinId);
     }
 }
 
 // Gestisce il paste di dati in formato CSV (Codice,Tipologia,Sequenza)
-function handleCSVPaste(input, lines) {
-    console.log('Gestendo paste CSV:', lines);
+function handleCSVPaste(input, lines, cabinId) {
+    console.log('Gestendo paste CSV per', cabinId, ':', lines);
     
-    const tbody = $('#bulkInputBody');
-    const currentRowId = input.attr('id').replace('bulkColor', '');
+    const iscabin1 = cabinId === 'cabin1';
+    const tbody = iscabin1 ? $('#cabin1InputBody') : $('#cabin2InputBody');
+    const prefix = iscabin1 ? 'cabin1' : 'cabin2';
+    const currentRowId = input.attr('id').replace(`${prefix}Color`, '');
     let validRows = 0;
     let processedData = [];
     
@@ -1086,13 +1413,13 @@ function handleCSVPaste(input, lines) {
     });
     
     if (processedData.length === 0) {
-        showBulkMessage('⚠️ Formato CSV non valido. Usa: Codice,Tipologia,Sequenza', 'warning');
+        showBulkMessage(`⚠️ Formato CSV non valido per ${cabinId}. Usa: Codice,Tipologia,Sequenza`, 'warning');
         return;
     }
     
     // Rimuovi righe vuote successive
     tbody.find('tr').each(function() {
-        const rowId = $(this).attr('id').replace('bulkRow', '');
+        const rowId = $(this).attr('id').replace(`${prefix}Row`, '');
         if (parseInt(rowId) > parseInt(currentRowId)) {
             const colorInput = $(this).find('.bulk-color-input');
             if (!colorInput.val().trim()) {
@@ -1105,16 +1432,16 @@ function handleCSVPaste(input, lines) {
     if (processedData.length > 0) {
         const firstData = processedData[0];
         input.val(firstData.code);
-        $(`#bulkType${currentRowId}`).val(firstData.type);
+        $(`#${prefix}Type${currentRowId}`).val(firstData.type);
         if (firstData.sequence) {
-            $(`#bulkSequence${currentRowId}`).val(firstData.sequence);
+            $(`#${prefix}Sequence${currentRowId}`).val(firstData.sequence);
         }
         
         // Aggiungi evidenziazione
         input.addClass('highlight-paste');
-        $(`#bulkType${currentRowId}`).addClass('highlight-paste');
+        $(`#${prefix}Type${currentRowId}`).addClass('highlight-paste');
         if (firstData.sequence) {
-            $(`#bulkSequence${currentRowId}`).addClass('highlight-paste');
+            $(`#${prefix}Sequence${currentRowId}`).addClass('highlight-paste');
         }
     }
     
@@ -1122,26 +1449,26 @@ function handleCSVPaste(input, lines) {
     let lastRowId = parseInt(currentRowId);
     for (let i = 1; i < processedData.length; i++) {
         const data = processedData[i];
-        const newRowId = addBulkRowAfter(lastRowId, data.code);
+        const newRowId = addBulkRowAfter(cabinId, lastRowId, data.code);
         lastRowId = newRowId;
         
         // Popola tipologia e sequenza
         setTimeout(() => {
-            $(`#bulkType${newRowId}`).val(data.type);
+            $(`#${prefix}Type${newRowId}`).val(data.type);
             if (data.sequence) {
-                $(`#bulkSequence${newRowId}`).val(data.sequence);
+                $(`#${prefix}Sequence${newRowId}`).val(data.sequence);
             }
             
             // Aggiungi evidenziazione
-            $(`#bulkColor${newRowId}`).addClass('highlight-paste');
-            $(`#bulkType${newRowId}`).addClass('highlight-paste');
+            $(`#${prefix}Color${newRowId}`).addClass('highlight-paste');
+            $(`#${prefix}Type${newRowId}`).addClass('highlight-paste');
             if (data.sequence) {
-                $(`#bulkSequence${newRowId}`).addClass('highlight-paste');
+                $(`#${prefix}Sequence${newRowId}`).addClass('highlight-paste');
             }
         }, 50);
     }
     
-    showBulkMessage(`✅ Importati ${validRows} colori con tipologia e sequenza dal formato CSV!`, 'success');
+    showBulkMessage(`✅ Importati ${validRows} colori in ${cabinId} con tipologia e sequenza dal formato CSV!`, 'success');
     
     // Rimuovi evidenziazione dopo 3 secondi
     setTimeout(() => {
@@ -1150,20 +1477,21 @@ function handleCSVPaste(input, lines) {
 }
 
 // Gestisce il paste semplice (solo codici colore)
-function handleSimplePaste(input, lines) {
-    console.log('Gestendo paste semplice:', lines);
+function handleSimplePaste(input, lines, cabinId) {
+    console.log('Gestendo paste semplice per', cabinId, ':', lines);
+    
+    const iscabin1 = cabinId === 'cabin1';
+    const tbody = iscabin1 ? $('#cabin1InputBody') : $('#cabin2InputBody');
+    const prefix = iscabin1 ? 'cabin1' : 'cabin2';
+    const currentRowId = input.attr('id').replace(`${prefix}Color`, '');
     
     // Inserisci il primo codice nell'input corrente
     const firstCode = lines[0];
     input.val(firstCode);
     
-    // Crea righe aggiuntive per i codici rimanenti
-    const tbody = $('#bulkInputBody');
-    const currentRowId = input.attr('id').replace('bulkColor', '');
-    
     // Rimuovi tutte le righe vuote successive a quella corrente
     tbody.find('tr').each(function() {
-        const rowId = $(this).attr('id').replace('bulkRow', '');
+        const rowId = $(this).attr('id').replace(`${prefix}Row`, '');
         if (parseInt(rowId) > parseInt(currentRowId)) {
             const colorInput = $(this).find('.bulk-color-input');
             if (!colorInput.val().trim()) {
@@ -1177,19 +1505,19 @@ function handleSimplePaste(input, lines) {
     for (let i = 1; i < lines.length; i++) {
         const colorCode = lines[i];
         if (colorCode) {
-            const newRowId = addBulkRowAfter(lastRowId, colorCode);
+            const newRowId = addBulkRowAfter(cabinId, lastRowId, colorCode);
             lastRowId = newRowId;
         }
     }
     
     // Mostra un messaggio di conferma
-    showBulkMessage(`✅ Aggiunti ${lines.length} codici colore automaticamente!`, 'success');
+    showBulkMessage(`✅ Aggiunti ${lines.length} codici colore in ${cabinId} automaticamente!`, 'success');
     
     // Aggiungi validazione visiva ai nuovi input
     setTimeout(() => {
         lines.forEach((code, index) => {
             const rowNumber = parseInt(currentRowId) + index;
-            const input = $(`#bulkColor${rowNumber}`);
+            const input = $(`#${prefix}Color${rowNumber}`);
             if (input.length && isValidColorCode(code)) {
                 input.addClass('is-valid');
             }
@@ -1253,100 +1581,9 @@ function addBulkRowWithValidation(colorCode = '') {
     return rowId;
 }
 
-// Processa tutti i colori inseriti nella tabella bulk e lancia l'ottimizzazione
-function processBulkInput() {
-    const tbody = $('#bulkInputBody');
-    const rows = tbody.find('tr');
-    const colors = [];
-    const selectedLength = $('#bulkLengthSelect').val();
-    const startCluster = $('#bulkStartCluster').val();
-    const firstColor = $('#bulkFirstColor').val().trim();
-    
-    rows.each(function() {
-        const rowId = $(this).attr('id');
-        if (!rowId) return;
-        
-        const rowNumber = rowId.replace('bulkRow', '');
-        const colorCode = $(`#bulkColor${rowNumber}`).val().trim();
-        const colorType = $(`#bulkType${rowNumber}`).val();
-        const colorSequence = $(`#bulkSequence${rowNumber}`).val();
-        
-        // Aggiungi solo righe con almeno codice e tipo compilati
-        if (colorCode && colorType) {
-            colors.push({
-                code: colorCode,
-                type: colorType,
-                lunghezza_ordine: selectedLength,
-                sequence: parseInt(colorSequence) || null,
-                CH: null
-            });
-        }
-    });
-    
-    if (colors.length === 0) {
-        alert('Nessun colore valido da processare. Compila almeno Codice Colore e Tipologia.');
-        return;
-    }
-    
-    // Verifica che il primo colore sia presente nella lista se specificato
-    if (firstColor && !colors.some(c => c.code === firstColor)) {
-        alert(`Il primo colore "${firstColor}" deve essere presente nella lista colori.`);
-        return;
-    }
-    
-    // Mostra loading
-    const btnText = $('.btn-text-bulk');
-    const spinner = $('.spinner-border');
-    const button = $('button:contains("Ottimizza Colori")');
-    
-    btnText.addClass('d-none');
-    spinner.removeClass('d-none');
-    button.prop('disabled', true);
-    
-    // Prepara i dati per l'API
-    const requestData = {
-        colors_today: colors,
-        start_cluster_name: startCluster || null,
-        first_color: firstColor || null
-    };
-    
-    // Chiama l'API di ottimizzazione
-    $.ajax({
-        url: '/api/optimize',
-        method: 'POST',
-        contentType: 'application/json',
-        data: JSON.stringify(requestData),
-        timeout: 60000, // 60 secondi timeout
-        success: function(response) {
-            displayOptimizationResults(response);
-            refreshCabinStatus();
-            $('#resultsContainer').show();
-            clearBulkTable(); // Pulisci la tabella dopo il successo
-            alert('Ottimizzazione completata con successo!');
-        },
-        error: function(xhr, status, error) {
-            let errorMessage = 'Errore durante l\'ottimizzazione';
-            if (xhr.responseJSON && xhr.responseJSON.detail) {
-                errorMessage = xhr.responseJSON.detail;
-            } else if (status === 'timeout') {
-                errorMessage = 'Timeout: l\'ottimizzazione sta richiedendo troppo tempo';
-            }
-            alert(errorMessage);
-        },
-        complete: function() {
-            // Nascondi spinner
-            btnText.removeClass('d-none');
-            spinner.addClass('d-none');
-            button.prop('disabled', false);
-        }
-    });
-}
-
-// Gestione cambio lunghezza per input veloce
+// Gestione cambio lunghezza per input veloce (funzione legacy mantenuta per compatibilità)
 function handleLengthChange() {
-    const lengthSelect = document.getElementById('bulkLengthSelect');
-    const selectedLength = lengthSelect.value;
-    console.log('Lunghezza selezionata per input veloce:', selectedLength);
+    console.log('handleLengthChange: funzione legacy non più utilizzata con i moduli separati');
 }
 
 // Auto-compila i tipi basandosi sui codici colore
@@ -1409,6 +1646,232 @@ function fillDefaultTypes() {
     }
 }
 
+// Auto-compila i tipi basandosi sui codici colore
+function fillDefaultTypes(cabinId = 'cabin1') {
+    const iscabin1 = cabinId === 'cabin1';
+    const tbody = iscabin1 ? $('#cabin1InputBody') : $('#cabin2InputBody');
+    const prefix = iscabin1 ? 'cabin1' : 'cabin2';
+    let filledCount = 0;
+    
+    tbody.find('tr').each(function() {
+        const rowId = $(this).attr('id');
+        if (!rowId) return;
+        
+        const rowNumber = rowId.replace(`${prefix}Row`, '');
+        const colorInput = $(`#${prefix}Color${rowNumber}`);
+        const typeSelect = $(`#${prefix}Type${rowNumber}`);
+        
+        const colorCode = colorInput.val().trim().toUpperCase();
+        
+        // Solo se il codice è presente e il tipo non è già selezionato
+        if (colorCode && !typeSelect.val()) {
+            let suggestedType = 'E'; // Default: Estetico
+            
+            // Logica per determinare il tipo basandosi sul codice
+            if (colorCode.startsWith('RAL')) {
+                suggestedType = 'E';
+            } else if (/^\d{8}$/.test(colorCode)) {
+                suggestedType = 'K';
+            }
+            
+            typeSelect.val(suggestedType);
+            typeSelect.addClass('auto-filled');
+            filledCount++;
+        }
+    });
+    
+    if (filledCount > 0) {
+        showBulkMessage(`🤖 Auto-compilati ${filledCount} tipi di colore per ${cabinId}! Verifica e modifica se necessario.`, 'info');
+        
+        // Aggiungi highlight temporaneo ai campi auto-compilati
+        $('.auto-filled').addClass('highlight-paste');
+        setTimeout(() => {
+            $('.auto-filled').removeClass('highlight-paste auto-filled');
+        }, 3000);
+    } else {
+        showBulkMessage(`⚠️ Nessun tipo auto-compilato per ${cabinId}. Assicurati di aver inserito dei codici colore.`, 'warning');
+    }
+}
+
+// Processa entrambe le cabine e lancia l'ottimizzazione
+function processBothCabins() {
+    const cabin1Colors = getCabinColors('cabin1');
+    const cabin2Colors = getCabinColors('cabin2');
+    
+    if (cabin1Colors.length === 0 && cabin2Colors.length === 0) {
+        alert('Nessun colore valido da processare in entrambe le cabine. Compila almeno Codice Colore e Tipologia.');
+        return;
+    }
+    
+    // Ottieni le configurazioni per entrambe le cabine
+    const cabin1StartCluster = $('#cabin1StartCluster').val();
+    const cabin1FirstColor = $('#cabin1FirstColor').val().trim();
+    const cabin2StartCluster = $('#cabin2StartCluster').val();
+    const cabin2FirstColor = $('#cabin2FirstColor').val().trim();
+    
+    // Verifica che i primi colori siano presenti nelle rispettive liste se specificati
+    if (cabin1FirstColor && cabin1Colors.length > 0 && !cabin1Colors.some(c => c.code === cabin1FirstColor)) {
+        alert(`Il primo colore "${cabin1FirstColor}" deve essere presente nella lista colori della Cabina 1.`);
+        return;
+    }
+    
+    if (cabin2FirstColor && cabin2Colors.length > 0 && !cabin2Colors.some(c => c.code === cabin2FirstColor)) {
+        alert(`Il primo colore "${cabin2FirstColor}" deve essere presente nella lista colori della Cabina 2.`);
+        return;
+    }
+    
+    // Mostra loading
+    const btnText = $('.btn-text-bulk');
+    const spinner = $('.spinner-border');
+    const button = $('button:contains("Ottimizza Entrambe le Cabine")');
+    
+    btnText.addClass('d-none');
+    spinner.removeClass('d-none');
+    button.prop('disabled', true);
+    
+    console.log('DEBUG: Processando entrambe le cabine:', {
+        cabin1Colors: cabin1Colors.length,
+        cabin2Colors: cabin2Colors.length
+    });
+    
+    // Processa le cabine in sequenza
+    let completedRequests = 0;
+    let allResults = {};
+    
+    function checkCompletion() {
+        completedRequests++;
+        if (completedRequests === 2) {
+            // Entrambe le richieste completate
+            console.log('DEBUG: Ottimizzazione completata per entrambe le cabine');
+            displayCombinedOptimizationResults(allResults);
+            refreshCabinStatus();
+            $('#resultsContainer').show();
+            clearBulkTable('cabin1'); 
+            clearBulkTable('cabin2');
+            alert('Ottimizzazione completata con successo per entrambe le cabine!');
+            
+            // Nascondi spinner
+            btnText.removeClass('d-none');
+            spinner.addClass('d-none');
+            button.prop('disabled', false);
+        }
+    }
+    
+    function handleError(cabinName, xhr, status, error) {
+        let errorMessage = `Errore durante l'ottimizzazione della ${cabinName}`;
+        if (xhr.responseJSON && xhr.responseJSON.detail) {
+            errorMessage += ': ' + xhr.responseJSON.detail;
+        } else if (status === 'timeout') {
+            errorMessage += ': Timeout';
+        }
+        console.error(`Errore ${cabinName}:`, errorMessage);
+        alert(errorMessage);
+        
+        // Nascondi spinner anche in caso di errore
+        btnText.removeClass('d-none');
+        spinner.addClass('d-none');
+        button.prop('disabled', false);
+    }
+    
+    // Ottimizza Cabina 1 se ha colori
+    if (cabin1Colors.length > 0) {
+        const requestData1 = {
+            colors_today: cabin1Colors,
+            start_cluster_name: cabin1StartCluster || null,
+            first_color: cabin1FirstColor || null
+        };
+        
+        console.log('DEBUG: Inviando richiesta per Cabina 1:', requestData1);
+        
+        const optimizeUrl1 = BACKEND_URL + '/optimize';
+        console.log('DEBUG: Cabin1 AJAX URL:', optimizeUrl1);
+        $.ajax({
+            url: optimizeUrl1,
+            method: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify(requestData1),
+            timeout: 60000,
+            success: function(response) {
+                allResults.cabina_1 = response;
+                console.log('DEBUG: Risposta Cabina 1:', response);
+                checkCompletion();
+            },
+            error: function(xhr, status, error) {
+                handleError('Cabina 1', xhr, status, error);
+            }
+        });
+    } else {
+        // Nessun colore per Cabina 1, salta
+        allResults.cabina_1 = null;
+        checkCompletion();
+    }
+    
+    // Ottimizza Cabina 2 se ha colori
+    if (cabin2Colors.length > 0) {
+        const requestData2 = {
+            colors_today: cabin2Colors,
+            start_cluster_name: cabin2StartCluster || null,
+            first_color: cabin2FirstColor || null
+        };
+        
+        console.log('DEBUG: Inviando richiesta per Cabina 2:', requestData2);
+        
+        const optimizeUrl2 = BACKEND_URL + '/optimize';
+        console.log('DEBUG: Cabin2 AJAX URL:', optimizeUrl2);
+        $.ajax({
+            url: optimizeUrl2,
+            method: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify(requestData2),
+            timeout: 60000,
+            success: function(response) {
+                allResults.cabina_2 = response;
+                console.log('DEBUG: Risposta Cabina 2:', response);
+                checkCompletion();
+            },
+            error: function(xhr, status, error) {
+                handleError('Cabina 2', xhr, status, error);
+            }
+        });
+    } else {
+        // Nessun colore per Cabina 2, salta
+        allResults.cabina_2 = null;
+        checkCompletion();
+    }
+}
+
+// Funzione helper per ottenere i colori di una cabina
+function getCabinColors(cabinId) {
+    const iscabin1 = cabinId === 'cabin1';
+    const tbody = iscabin1 ? $('#cabin1InputBody') : $('#cabin2InputBody');
+    const prefix = iscabin1 ? 'cabin1' : 'cabin2';
+    const lunghezza = iscabin1 ? 'corto' : 'lungo';
+    const colors = [];
+    
+    tbody.find('tr').each(function() {
+        const rowId = $(this).attr('id');
+        if (!rowId) return;
+        
+        const rowNumber = rowId.replace(`${prefix}Row`, '');
+        const colorCode = $(`#${prefix}Color${rowNumber}`).val().trim();
+        const colorType = $(`#${prefix}Type${rowNumber}`).val();
+        const colorSequence = $(`#${prefix}Sequence${rowNumber}`).val();
+        
+        // Aggiungi solo righe con almeno codice e tipo compilati
+        if (colorCode && colorType) {
+            colors.push({
+                code: colorCode,
+                type: colorType,
+                lunghezza_ordine: lunghezza,
+                sequence: parseInt(colorSequence) || null,
+                CH: null
+            });
+        }
+    });
+    
+    return colors;
+}
+
 // Funzione per testare il paste multiplo con codici di esempio
 function insertTestCodes() {
     const testCodes = [
@@ -1419,14 +1882,15 @@ function insertTestCodes() {
         'RAL9008'
     ];
     
-    // Pulisci la tabella prima
-    clearBulkTable();
+    // Pulisci le tabelle prima
+    clearBulkTable('cabin1');
+    clearBulkTable('cabin2');
     
-    // Simula un paste multiplo nella prima riga
-    const firstInput = $('#bulkColor1');
+    // Simula un paste multiplo nella prima riga della Cabina 1
+    const firstInput = $('#cabin1Color1');
     if (firstInput.length) {
-        handleMultiLinePaste(firstInput, testCodes);
-        showBulkMessage('🧪 Inseriti codici di test per dimostrare il paste semplice!', 'info');
+        handleMultiLinePaste(firstInput, testCodes, 'cabin1');
+        showBulkMessage('🧪 Inseriti codici di test nella Cabina 1 per dimostrare il paste semplice!', 'info');
     }
 }
 
@@ -1442,14 +1906,15 @@ function insertTestCSV() {
         'RAL9008,R,1'
     ];
     
-    // Pulisci la tabella prima
-    clearBulkTable();
+    // Pulisci le tabelle prima
+    clearBulkTable('cabin1');
+    clearBulkTable('cabin2');
     
-    // Simula un paste CSV nella prima riga
-    const firstInput = $('#bulkColor1');
+    // Simula un paste CSV nella prima riga della Cabina 2
+    const firstInput = $('#cabin2Color1');
     if (firstInput.length) {
-        handleMultiLinePaste(firstInput, testCSV);
-        showBulkMessage('🧪 Inseriti dati CSV di test con Codice,Tipologia,Sequenza!', 'success');
+        handleMultiLinePaste(firstInput, testCSV, 'cabin2');
+        showBulkMessage('🧪 Inseriti dati CSV di test nella Cabina 2 per dimostrare il paste completo!', 'info');
     }
 }
 
@@ -1496,124 +1961,91 @@ function prepareExportData(results) {
     let allColors = [];
     
     // Funzione helper per processare i colori di una cabina
-    function collectColors(colors) {
+    function collectColors(colors, cabinType = '') {
         if (!colors || !Array.isArray(colors)) return;
         
         colors.forEach(color => {
             allColors.push({
                 colorCode: color.color_code || color.code,
                 colorType: color.color_type || color.type,
-                sequence: color.final_sequence || color.sequence || ''
+                sequence: color.final_sequence || color.sequence || '',
+                cabin: cabinType
             });
         });
     }
     
     // Processa i risultati in base al formato
-    if (results.cabina_1 && results.cabina_2) {
-        // Risultati per cabine separate
-        collectColors(results.cabina_1.ordered_colors);
-        collectColors(results.cabina_2.ordered_colors);
-    } else {
-        // Risultati standard
+    if (results.cabina_1 || results.cabina_2) {
+        // Risultati per cabine separate (nuova struttura)
+        if (results.cabina_1 && results.cabina_1.ordered_colors) {
+            collectColors(results.cabina_1.ordered_colors, 'Cabina 1');
+        }
+        if (results.cabina_2 && results.cabina_2.ordered_colors) {
+            collectColors(results.cabina_2.ordered_colors, 'Cabina 2');
+        }
+    } else if (results.ordered_colors) {
+        // Risultati standard (vecchia struttura)
         collectColors(results.ordered_colors);
     }
     
-    // Raggruppa solo colori consecutivi con lo stesso codice
-    const groups = [];
-    let currentGroup = null;
+    if (allColors.length === 0) {
+        console.warn('Nessun colore trovato nei risultati per l\'esportazione');
+        return data;
+    }
+    
+    // Raggruppa i colori per codice
+    const colorGroups = {};
     
     allColors.forEach(color => {
         const colorCode = color.colorCode;
-        const colorType = color.colorType;
-        const sequence = color.sequence;
         
-        // Se è lo stesso colore E stesso tipo del gruppo corrente, aggiungilo
-        if (currentGroup && currentGroup.colorCode === colorCode && currentGroup.lastType === colorType) {
-            // Aggiungi alla categoria appropriata del gruppo corrente
-            if (colorType === 'E' || colorType === 'R' || colorType === 'RE') {
-                if (currentGroup.E.seq) {
-                    currentGroup.E.seq += ';' + sequence;
-                    currentGroup.E.tipo += ';' + colorType;
-                } else {
-                    currentGroup.E.seq = sequence;
-                    currentGroup.E.tipo = colorType;
-                }
-            } else if (colorType === 'K') {
-                if (currentGroup.K.seq) {
-                    currentGroup.K.seq += ';' + sequence;
-                    currentGroup.K.tipo += ';' + colorType;
-                } else {
-                    currentGroup.K.seq = sequence;
-                    currentGroup.K.tipo = colorType;
-                }
-            } else if (colorType === 'F') {
-                if (currentGroup.F.seq) {
-                    currentGroup.F.seq += ';' + sequence;
-                    currentGroup.F.tipo += ';' + colorType;
-                } else {
-                    currentGroup.F.seq = sequence;
-                    currentGroup.F.tipo = colorType;
-                }
-            }
-        } else {
-            // Colore diverso, tipo diverso, o primo colore: crea un nuovo gruppo
-            if (currentGroup) {
-                groups.push(currentGroup);
-            }
-            
-            currentGroup = {
+        if (!colorGroups[colorCode]) {
+            colorGroups[colorCode] = {
                 colorCode: colorCode,
-                lastType: colorType, // Memorizza l'ultimo tipo per il confronto
-                E: { seq: '', tipo: '' },
-                K: { seq: '', tipo: '' },
-                F: { seq: '', tipo: '' }
+                E: { sequences: [], lines: [], types: [] },
+                K: { sequences: [], lines: [], types: [] },
+                F: { sequences: [], lines: [], types: [] }
             };
-            
-            // Aggiungi il colore corrente al nuovo gruppo
-            if (colorType === 'E' || colorType === 'R' || colorType === 'RE') {
-                currentGroup.E.seq = sequence;
-                currentGroup.E.tipo = colorType;
-            } else if (colorType === 'K') {
-                currentGroup.K.seq = sequence;
-                currentGroup.K.tipo = colorType;
-            } else if (colorType === 'F') {
-                currentGroup.F.seq = sequence;
-                currentGroup.F.tipo = colorType;
-            }
+        }
+        
+        const type = color.colorType;
+        const sequence = color.sequence || '';
+        const cabin = color.cabin || '';
+        
+        // Aggiungi i dati alla categoria appropriata
+        if (type === 'E' || type === 'R' || type === 'RE') {
+            colorGroups[colorCode].E.sequences.push(sequence);
+            colorGroups[colorCode].E.lines.push(cabin);
+            colorGroups[colorCode].E.types.push(type);
+        } else if (type === 'K') {
+            colorGroups[colorCode].K.sequences.push(sequence);
+            colorGroups[colorCode].K.lines.push(cabin);
+            colorGroups[colorCode].K.types.push(type);
+        } else if (type === 'F') {
+            colorGroups[colorCode].F.sequences.push(sequence);
+            colorGroups[colorCode].F.lines.push(cabin);
+            colorGroups[colorCode].F.types.push(type);
         }
     });
     
-    // Aggiungi l'ultimo gruppo
-    if (currentGroup) {
-        groups.push(currentGroup);
-    }
-    
-    // Converte i gruppi in righe per Excel
-    groups.forEach(group => {
+    // Converti i gruppi in righe Excel
+    Object.values(colorGroups).forEach(group => {
         const row = [
             group.colorCode,
-            group.E.seq, '', group.E.tipo,  // Estetico/Reintegro
-            group.K.seq, '', group.K.tipo,  // Kit
-            group.F.seq, '', group.F.tipo   // Fisso
+            group.E.sequences.join(', ') || '',
+            group.E.lines.join(', ') || '',
+            group.E.types.join(', ') || '',
+            group.K.sequences.join(', ') || '',
+            group.K.lines.join(', ') || '',
+            group.K.types.join(', ') || '',
+            group.F.sequences.join(', ') || '',
+            group.F.lines.join(', ') || '',
+            group.F.types.join(', ') || ''
         ];
         data.push(row);
     });
     
     return data;
 }
-
-// Inizializza la tabella bulk quando la pagina è pronta
-$(document).ready(function() {
-    initBulkTable();
-    
-    // Gestisce l'icona di toggle per la sezione JSON
-    $('#jsonFormCollapse').on('show.bs.collapse', function () {
-        $('#jsonToggleIcon').removeClass('fa-chevron-down').addClass('fa-chevron-up');
-    });
-    
-    $('#jsonFormCollapse').on('hide.bs.collapse', function () {
-        $('#jsonToggleIcon').removeClass('fa-chevron-up').addClass('fa-chevron-down');
-    });
-});
 </script>
 {% endblock %}

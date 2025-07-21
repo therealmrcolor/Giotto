@@ -38,7 +38,12 @@ BONUS_REINTEGRO_PRIORITARIO = -50  # Esempio: Sconto di 50, deve essere > BONUS_
 
 # Path del database SQLite
 import os
-DATABASE_PATH = os.environ.get('DATABASE_PATH', "/app/app/data/colors.db")
+from pathlib import Path
+
+# Calcola il path relativo al database partendo dalla directory corrente
+# Il backend/app/ dovrebbe puntare a ../../shared/data/colors.db
+current_dir = Path(__file__).parent
+DATABASE_PATH = os.environ.get('DATABASE_PATH', str(current_dir / "../../shared/data/colors.db"))
 
 # Fattore di penalità per le urgenze 
 URGENCY_PENALTY_FACTOR = 10

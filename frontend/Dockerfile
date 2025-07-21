@@ -12,7 +12,7 @@ EXPOSE 80
 
 # Variabile d'ambiente per specificare l'URL del backend
 # Può essere sovrascritta da docker-compose.yml
-ENV FASTAPI_BACKEND_URL=http://backend
+ENV FASTAPI_BACKEND_URL=http://backend:80
 # Chiave segreta per Flask (meglio sovrascriverla in docker-compose)
 ENV FLASK_SECRET_KEY=default-secret-key-change-me
 

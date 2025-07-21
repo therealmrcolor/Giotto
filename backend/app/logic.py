@@ -10,9 +10,9 @@ import os
 from pathlib import Path
 
 # Importa configurazioni, funzioni DB e modelli
-from . import config
-from . import database
-from .models import ColorObject, ClusterDict, TransitionRuleDict
+from app import config
+from app import database
+from app.models import ColorObject, ClusterDict, TransitionRuleDict
 
 # Variabili globali per Held-Karp (devono essere accessibili dalla funzione ricorsiva)
 # Vengono popolate dalla funzione principale `optimize_color_sequence`

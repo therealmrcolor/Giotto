@@ -48,6 +48,6 @@ class OptimizationResponse(BaseModel):
 
 # Modello per la risposta dell'endpoint /optimize con gestione cabine
 class CabinOptimizationResponse(BaseModel):
-    cabina_1: OptimizationResponse  # Risultati per colori "corto"
-    cabina_2: OptimizationResponse  # Risultati per colori "lungo"
+    cabina_1: Optional[OptimizationResponse] = None  # Risultati per colori "corto" (opzionale)
+    cabina_2: Optional[OptimizationResponse] = None  # Risultati per colori "lungo" (opzionale)
     message: str # Messaggio di successo o errore generale

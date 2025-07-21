@@ -4,7 +4,7 @@
 import sqlite3
 import json
 from typing import Dict, List, Tuple, Any, Optional
-from .config import DATABASE_PATH # Importa il path dal config
+from app.config import DATABASE_PATH # Importa il path dal config
 
 # Tipi definiti (possono stare qui o in models.py)
 ColorObject = Dict[str, Any]
@@ -302,3 +302,146 @@ def get_unique_clusters() -> List[str]:
         return []
     finally:
         if conn: conn.close()
+
+# === OPTIMIZATION COLORS ===
+
+def save_optimization_results(ordered_colors: List[Dict[str, Any]], cabin_id: int = 1) -> bool:
+    """
+    Salva i risultati dell'ottimizzazione nella tabella optimization_colors.
+    Sostituisce tutti i colori esistenti per la cabina specificata.
+    """
+    conn = connect_to_db()
+    if not conn:
+        return False
+    
+    try:
+        cursor = conn.cursor()
+        
+        # Elimina tutti i colori esistenti per questa cabina
+        cursor.execute("DELETE FROM optimization_colors WHERE cabin_id = ?", (cabin_id,))
+        
+        # Inserisci i nuovi colori ottimizzati
+        for i, color in enumerate(ordered_colors):
+            cursor.execute("""
+                INSERT INTO optimization_colors (
+                    color_code, color_type, cluster, ch_value, lunghezza_ordine,
+                    input_sequence, sequence_type, sequence_order, cabin_id,
+                    is_prioritized, completed, in_execution, locked
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, 0, 0)
+            """, (
+                color.get('code'),
+                color.get('type'),
+                color.get('cluster'),
+                color.get('CH'),
+                color.get('lunghezza_ordine'),
+                color.get('sequence'),
+                color.get('sequence_type'),
+                i + 1,  # sequence_order basato sulla posizione nell'array
+                cabin_id,
+                color.get('is_prioritized', False)
+            ))
+        
+        conn.commit()
+        print(f"[DB] Salvati {len(ordered_colors)} colori per cabina {cabin_id}")
+        return True
+        
+    except sqlite3.Error as e:
+        print(f"Errore durante il salvataggio dei colori ottimizzati: {e}")
+        conn.rollback()
+        return False
+    finally:
+        if conn:
+            conn.close()
+
+def get_optimization_colors(cabin_id: int = 1) -> List[Dict[str, Any]]:
+    """
+    Recupera i colori ottimizzati per una cabina specifica,
+    ordinati per sequence_order.
+    """
+    conn = connect_to_db()
+    if not conn:
+        return []
+    
+    try:
+        cursor = conn.cursor()
+        cursor.execute("""
+            SELECT 
+                id, color_code, color_type, cluster, ch_value, lunghezza_ordine,
+                input_sequence, sequence_type, sequence_order, cabin_id,
+                is_prioritized, completed, in_execution, locked, position,
+                created_at
+            FROM optimization_colors 
+            WHERE cabin_id = ?
+            ORDER BY sequence_order ASC
+        """, (cabin_id,))
+        
+        results = []
+        for row in cursor.fetchall():
+            results.append(dict(row))
+        
+        return results
+        
+    except sqlite3.Error as e:
+        print(f"Errore durante il recupero dei colori ottimizzati: {e}")
+        return []
+    finally:
+        if conn:
+            conn.close()
+
+def get_cabin_status(cabin_id: int = 1) -> Dict[str, int]:
+    """
+    Recupera lo status di una cabina (totali, in esecuzione, completati).
+    """
+    conn = connect_to_db()
+    if not conn:
+        return {"total": 0, "executing": 0, "completed": 0}
+    
+    try:
+        cursor = conn.cursor()
+        cursor.execute("""
+            SELECT 
+                COUNT(*) as total,
+                SUM(CASE WHEN in_execution = 1 THEN 1 ELSE 0 END) as executing,
+                SUM(CASE WHEN completed = 1 THEN 1 ELSE 0 END) as completed
+            FROM optimization_colors 
+            WHERE cabin_id = ?
+        """, (cabin_id,))
+        
+        row = cursor.fetchone()
+        if row:
+            return {
+                "total": row['total'] or 0,
+                "executing": row['executing'] or 0,
+                "completed": row['completed'] or 0
+            }
+        else:
+            return {"total": 0, "executing": 0, "completed": 0}
+            
+    except sqlite3.Error as e:
+        print(f"Errore durante il recupero dello status cabina: {e}")
+        return {"total": 0, "executing": 0, "completed": 0}
+    finally:
+        if conn:
+            conn.close()
+
+def clear_all_optimization_colors() -> bool:
+    """
+    Elimina tutti i colori ottimizzati da entrambe le cabine.
+    """
+    conn = connect_to_db()
+    if not conn:
+        return False
+    
+    try:
+        cursor = conn.cursor()
+        cursor.execute("DELETE FROM optimization_colors")
+        conn.commit()
+        print("[DB] Eliminati tutti i colori ottimizzati")
+        return True
+        
+    except sqlite3.Error as e:
+        print(f"Errore durante la pulizia dei colori ottimizzati: {e}")
+        return False
+    finally:
+        if conn:
+            conn.close()

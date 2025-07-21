@@ -628,7 +628,10 @@ with app.app_context():
 @app.route('/', methods=['GET'])
 def index():
     form = OptimizationInputForm()
-    return render_template('index.html', form=form)
+    # Pass both internal Docker URL and external host URL
+    docker_backend_url = BACKEND_URL  # http://backend:80
+    host_backend_url = "http://localhost:8000"  # For external access
+    return render_template('index.html', form=form, docker_backend_url=docker_backend_url, host_backend_url=host_backend_url)
 
 @app.route('/db-check')
 def db_check():
@@ -822,7 +825,9 @@ def optimize():
             }
         except Exception as e:
             flash(f"Errore nei dati del form: {e}", "danger")
-            return render_template('index.html', form=form) # Torna a index se il form ha problemi
+            docker_backend_url = BACKEND_URL
+            host_backend_url = "http://localhost:8000"
+            return render_template('index.html', form=form, docker_backend_url=docker_backend_url, host_backend_url=host_backend_url) # Torna a index se il form ha problemi
     
     # --- Chiamata al Backend ---
     # --- Chiamata al Backend ---
@@ -1628,7 +1633,9 @@ def update_transition_weight():
 @app.route('/')
 def home():
     """Pagina principale del sistema di ottimizzazione colori."""
-    return render_template('index.html')
+    docker_backend_url = BACKEND_URL  # http://backend:80
+    host_backend_url = "http://localhost:8000"  # For external access
+    return render_template('index.html', docker_backend_url=docker_backend_url, host_backend_url=host_backend_url)
 
 @app.route('/cabin/<int:cabin_id>')
 def cabin_view(cabin_id):
