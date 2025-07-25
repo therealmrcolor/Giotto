@@ -663,7 +663,23 @@ async function detectBackendUrl() {
         console.log('DEBUG: Host backend not reachable:', error.message);
     }
     
-    // If both fail, default to host URL and log error
+    // If both fail, try to construct URL based on current host
+    try {
+        const currentHost = window.location.hostname;
+        const dynamicBackendUrl = `http://${currentHost}:8000`;
+        console.log('DEBUG: Trying dynamic backend URL:', dynamicBackendUrl);
+        
+        const response = await fetch(dynamicBackendUrl + '/', { method: 'GET', timeout: 2000 });
+        if (response.ok) {
+            BACKEND_URL = dynamicBackendUrl;
+            console.log('DEBUG: Using dynamic backend URL:', BACKEND_URL);
+            return;
+        }
+    } catch (error) {
+        console.log('DEBUG: Dynamic backend not reachable:', error.message);
+    }
+    
+    // If all fail, default to host URL and log error
     BACKEND_URL = HOST_BACKEND_URL;
     console.error('DEBUG: No backend reachable, defaulting to:', BACKEND_URL);
 }
