@@ -2,15 +2,21 @@
 __pycache__/
 backend/.coverage
 
-# macOS system files
+# macOS system files (comprehensive exclusion)
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
 Icon?
 Icon
 **/Icon?
 **/Icon
-.DS_Store?
-.DS_Store
 **/.DS_Store
 **/.DS_Store?
+**/._*
 
 # Temporary files
 .vscode/settings.json
