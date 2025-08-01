@@ -1,0 +1,148 @@
+{% extends "base.html" %}
+
+{% block title %}Gestione Cluster Colori{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h1><i class="fas fa-database me-2"></i>Gestione Cluster Colori</h1>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add New Cluster Form -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-plus me-2"></i>Aggiungi Nuovo Cluster
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <form method="POST" action="{{ url_for('manage_cluster_colori') }}">
+                        {{ new_cluster_form.hidden_tag() }}
+                        <div class="row">
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    {{ new_cluster_form.cluster_name.label(class="form-label") }}
+                                    {{ new_cluster_form.cluster_name(class="form-control") }}
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    {{ new_cluster_form.color_code.label(class="form-label") }}
+                                    {{ new_cluster_form.color_code(class="form-control") }}
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label class="form-label">&nbsp;</label>
+                                    <div>
+                                        {{ new_cluster_form.submit(class="btn btn-primary") }}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Existing Cluster Colors -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-list me-2"></i>Cluster Colori Esistenti
+                    </h5>
+                </div>
+                <div class="card-body">
+                    {% if grouped_mappings %}
+                        {% for cluster_name, colors in grouped_mappings.items() %}
+                        <div class="mb-4">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <h6 class="text-primary mb-0">
+                                    <i class="fas fa-palette me-2"></i>Cluster: {{ cluster_name }}
+                                    <span class="badge bg-secondary ms-2">{{ colors|length }} colori</span>
+                                </h6>
+                                <form method="POST" action="{{ url_for('delete_cluster_route', cluster_name=cluster_name) }}" style="display: inline;">
+                                    <button type="submit" class="btn btn-sm btn-danger" 
+                                            onclick="return confirm('ATTENZIONE! Sei sicuro di voler eliminare COMPLETAMENTE il cluster \'{{ cluster_name }}\'?\n\nQuesta operazione eliminerà:\n- Tutti i codici colore del cluster\n- Tutte le regole di transizione verso questo cluster\n- Tutte le regole di transizione da questo cluster\n\nL\'operazione NON può essere annullata!')" 
+                                            title="Elimina tutto il cluster">
+                                        <i class="fas fa-trash me-1"></i>Elimina Cluster
+                                    </button>
+                                </form>
+                            </div>
+                            <div class="table-responsive">
+                                <table class="table table-sm table-striped">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th>ID</th>
+                                            <th>Codice Colore</th>
+                                            <th>Azioni</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for color in colors %}
+                                        <tr>
+                                            <td>{{ color.id }}</td>
+                                            <td>
+                                                <code class="color-code">{{ color.color_code }}</code>
+                                            </td>
+                                            <td>
+                                                <form method="POST" action="{{ url_for('edit_cluster_colori_row', row_id=color.id) }}" style="display: inline;">
+                                                    <button type="submit" class="btn btn-sm btn-outline-primary" title="Modifica">
+                                                        <i class="fas fa-edit"></i>
+                                                    </button>
+                                                </form>
+                                                <form method="POST" action="{{ url_for('delete_cluster_colori_row_route', row_id=color.id) }}" style="display: inline;">
+                                                    <button type="submit" class="btn btn-sm btn-outline-danger" 
+                                                            onclick="return confirm('Sei sicuro di voler eliminare questo codice colore?')" title="Elimina">
+                                                        <i class="fas fa-trash"></i>
+                                                    </button>
+                                                </form>
+                                            </td>
+                                        </tr>
+                                        {% endfor %}
+                                        <!-- Form per aggiungere nuovo color_code a questo cluster -->
+                                        <tr class="table-light">
+                                            <form method="POST" action="{{ url_for('add_cluster_colori_row_route', cluster_name=cluster_name) }}">
+                                                {{ add_row_form_template.hidden_tag() }}
+                                                <td><small class="text-muted">Nuovo</small></td>
+                                                <td>
+                                                    {{ add_row_form_template.color_code(class="form-control form-control-sm", placeholder="Es: RAL9016") }}
+                                                </td>
+                                                <td>
+                                                    {{ add_row_form_template.submit(class="btn btn-sm btn-success") }}
+                                                </td>
+                                            </form>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="text-center py-4">
+                            <i class="fas fa-database fa-3x text-muted mb-3"></i>
+                            <p class="text-muted">Nessun cluster colore trovato. Aggiungi il primo cluster utilizzando il form sopra.</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.color-code {
+    font-family: 'Courier New', monospace;
+    font-weight: 600;
+}
+</style>
+{% endblock %}

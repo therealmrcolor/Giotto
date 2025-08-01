@@ -10,13 +10,13 @@ from flask import Flask, render_template, request, flash, redirect, url_for, jso
 # from flask_wtf.csrf import CSRFProtect  # Temporarily disabled for testing
 try:
     from .forms import (
-        OptimizationInputForm, CambioColoriRowForm, NewSourceClusterForm,
-        ClusterColoriRowForm, NewClusterForm
+        OptimizationInputForm, CambioColoriRowForm,
+        ClusterColoriRowForm, NewClusterForm, NewCambioColoriForm
     )
 except ImportError:
     from forms import (
-        OptimizationInputForm, CambioColoriRowForm, NewSourceClusterForm,
-        ClusterColoriRowForm, NewClusterForm
+        OptimizationInputForm, CambioColoriRowForm,
+        ClusterColoriRowForm, NewClusterForm, NewCambioColoriForm
     )
 
 # Configurazione del logging
@@ -27,8 +27,15 @@ logging.basicConfig(
 logger = logging.getLogger('frontend')
 
 # Path del database SQLite
-# Usa variabile d'ambiente o default per Docker
-DATABASE_PATH = os.environ.get('DATABASE_PATH', "/app/app/data/colors.db")
+# Usa variabile d'ambiente o default
+# Per sviluppo locale usa la cartella shared, per Docker usa il path montato
+shared_db_path = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "shared", "data", "colors.db")
+if os.path.exists(shared_db_path):
+    DEFAULT_DB_PATH = shared_db_path
+else:
+    DEFAULT_DB_PATH = "/app/app/data/colors.db"
+
+DATABASE_PATH = os.environ.get('DATABASE_PATH', DEFAULT_DB_PATH)
 
 # --- DATABASE FUNCTIONS ---
 def connect_to_db(db_path: str = DATABASE_PATH) -> Optional[sqlite3.Connection]:
@@ -289,6 +296,25 @@ def get_cambio_colori_row_by_id(row_id: int) -> Optional[Dict[str, Any]]:
     finally:
         if conn: conn.close()
 
+def get_cambio_colori_by_source_target(source_cluster: str, target_cluster: str) -> Optional[List[Dict[str, Any]]]:
+    """Ottiene tutte le righe da cambio_colori per una specifica combinazione source_cluster e target_cluster."""
+    conn = connect_to_db()
+    if not conn: return None
+    try:
+        cursor = conn.cursor()
+        cursor.execute("""
+            SELECT id, source_cluster, target_cluster, peso, transition_colors, required_trigger_type 
+            FROM cambio_colori 
+            WHERE source_cluster = ? AND target_cluster = ?
+        """, (source_cluster, target_cluster))
+        rows = cursor.fetchall()
+        return [dict(row) for row in rows] if rows else []
+    except sqlite3.Error as e:
+        print(f"Errore in get_cambio_colori_by_source_target: {e}")
+        return []
+    finally:
+        if conn: conn.close()
+
 def add_cambio_colori_row(source_cluster: str, target_cluster: str, peso: int, transition_colors: str, required_trigger_type: Optional[str]) -> bool:
     """Aggiunge una nuova riga a cambio_colori."""
     conn = connect_to_db()
@@ -480,6 +506,76 @@ def get_unique_clusters() -> List[str]:
         if conn:
             conn.close()
     return clusters
+
+def delete_cluster_completely(cluster_name: str) -> dict:
+    """Elimina completamente un cluster e tutte le sue relazioni.
+    
+    Args:
+        cluster_name: Nome del cluster da eliminare
+        
+    Returns:
+        dict con statistiche dell'eliminazione: {
+            'success': bool,
+            'cluster_colori_deleted': int,
+            'cambio_colori_deleted': int,
+            'error': str or None
+        }
+    """
+    result = {
+        'success': False,
+        'cluster_colori_deleted': 0,
+        'cambio_colori_deleted': 0,
+        'error': None
+    }
+    
+    conn = connect_to_db()
+    if not conn:
+        result['error'] = "Impossibile connettersi al database"
+        return result
+    
+    try:
+        cursor = conn.cursor()
+        
+        # 1. Elimina tutte le righe da cluster_colori per questo cluster
+        cursor.execute("SELECT COUNT(*) FROM cluster_colori WHERE cluster = ?", (cluster_name,))
+        cluster_colori_count = cursor.fetchone()[0]
+        
+        cursor.execute("DELETE FROM cluster_colori WHERE cluster = ?", (cluster_name,))
+        result['cluster_colori_deleted'] = cursor.rowcount
+        
+        # 2. Elimina tutte le regole di transizione dove questo cluster è source_cluster
+        cursor.execute("SELECT COUNT(*) FROM cambio_colori WHERE source_cluster = ?", (cluster_name,))
+        source_rules_count = cursor.fetchone()[0]
+        
+        cursor.execute("DELETE FROM cambio_colori WHERE source_cluster = ?", (cluster_name,))
+        source_deleted = cursor.rowcount
+        
+        # 3. Elimina tutte le regole di transizione dove questo cluster è target_cluster
+        cursor.execute("SELECT COUNT(*) FROM cambio_colori WHERE target_cluster = ?", (cluster_name,))
+        target_rules_count = cursor.fetchone()[0]
+        
+        cursor.execute("DELETE FROM cambio_colori WHERE target_cluster = ?", (cluster_name,))
+        target_deleted = cursor.rowcount
+        
+        result['cambio_colori_deleted'] = source_deleted + target_deleted
+        
+        conn.commit()
+        result['success'] = True
+        
+        print(f"Cluster '{cluster_name}' eliminato completamente:")
+        print(f"  - {result['cluster_colori_deleted']} codici colore eliminati")
+        print(f"  - {source_deleted} regole source eliminate")
+        print(f"  - {target_deleted} regole target eliminate")
+        print(f"  - Totale regole cambio_colori eliminate: {result['cambio_colori_deleted']}")
+        
+    except sqlite3.Error as e:
+        result['error'] = f"Errore database: {e}"
+        print(f"Errore in delete_cluster_completely: {e}")
+    finally:
+        if conn:
+            conn.close()
+    
+    return result
 
 def sync_clusters_to_source_clusters():
     """Sincronizza i cluster dalla tabella cluster_colori alla tabella cambio_colori.
@@ -1378,6 +1474,110 @@ def delete_item(item_id):
 
 # --- NUOVE ROUTE PER GESTIONE DB ---
 
+@app.route('/delete/cluster/<cluster_name>', methods=['POST'])
+def delete_cluster_route(cluster_name):
+    """Route per eliminare completamente un cluster e tutte le sue relazioni."""
+    try:
+        # Verifica che il cluster esista
+        existing_clusters = get_unique_clusters()
+        if cluster_name not in existing_clusters:
+            flash(f"Il cluster '{cluster_name}' non esiste.", "danger")
+            return redirect(request.referrer or url_for('manage_cluster_colori'))
+        
+        # Controlla se è l'ultimo cluster rimasto
+        if len(existing_clusters) <= 1:
+            flash("Impossibile eliminare l'ultimo cluster. Deve rimanere almeno un cluster nel sistema.", "danger")
+            return redirect(request.referrer or url_for('manage_cluster_colori'))
+        
+        # Elimina il cluster
+        result = delete_cluster_completely(cluster_name)
+        
+        if result['success']:
+            flash(f"Cluster '{cluster_name}' eliminato con successo! Eliminati {result['cluster_colori_deleted']} codici colore e {result['cambio_colori_deleted']} regole di transizione.", "success")
+        else:
+            flash(f"Errore durante l'eliminazione del cluster '{cluster_name}': {result['error']}", "danger")
+        
+        # Reindirizza alla pagina da cui è arrivata la richiesta
+        return redirect(request.referrer or url_for('manage_cluster_colori'))
+        
+    except Exception as e:
+        print(f"Errore in delete_cluster_route: {e}")
+        flash(f"Errore durante l'eliminazione: {e}", "danger")
+        return redirect(request.referrer or url_for('manage_cluster_colori'))
+
+@app.route('/repair/complete_clusters', methods=['POST'])
+def repair_complete_clusters():
+    """Route per completare automaticamente i cluster incompleti con tutte le regole di transizione."""
+    try:
+        # Ottieni tutti i cluster esistenti
+        all_clusters = get_unique_clusters()
+        if not all_clusters:
+            flash("Nessun cluster trovato nel database.", "warning")
+            return redirect(url_for('manage_cambio_colori'))
+        
+        # Ottieni tutti i source cluster esistenti e conta le loro regole
+        source_clusters_rules = {}
+        grouped_rules = get_all_cambio_colori_grouped()
+        
+        for source_cluster, rules in grouped_rules.items():
+            source_clusters_rules[source_cluster] = len(rules)
+        
+        # Identifica i cluster incompleti (che hanno meno regole del numero totale di cluster)
+        expected_rules_count = len(all_clusters)
+        incomplete_clusters = []
+        
+        for source_cluster in all_clusters:
+            current_rules_count = source_clusters_rules.get(source_cluster, 0)
+            if current_rules_count < expected_rules_count:
+                incomplete_clusters.append(source_cluster)
+        
+        if not incomplete_clusters:
+            flash(f"Tutti i cluster sono già completi con {expected_rules_count} regole ciascuno.", "info")
+            return redirect(url_for('manage_cambio_colori'))
+        
+        # Completa ogni cluster incompleto
+        total_added = 0
+        for source_cluster in incomplete_clusters:
+            current_rules = source_clusters_rules.get(source_cluster, 0)
+            added_for_this_cluster = 0
+            
+            # Aggiungi regole verso tutti i cluster che mancano
+            for target_cluster in all_clusters:
+                # Verifica se la regola esiste già
+                existing_rules = get_cambio_colori_by_source_target(source_cluster, target_cluster)
+                if not existing_rules:  # Solo se non esiste già
+                    # Determina il peso di default
+                    if source_cluster == target_cluster:
+                        default_peso = 1  # Transizione interna: peso basso
+                    else:
+                        default_peso = 50  # Transizione esterna: peso medio
+                        
+                    success = add_cambio_colori_row(
+                        source_cluster=source_cluster,
+                        target_cluster=target_cluster,
+                        peso=default_peso,
+                        transition_colors="[]",
+                        required_trigger_type=None
+                    )
+                    
+                    if success:
+                        added_for_this_cluster += 1
+                        total_added += 1
+            
+            print(f"Cluster '{source_cluster}': aggiunte {added_for_this_cluster} regole (aveva {current_rules}, ora ha {current_rules + added_for_this_cluster})")
+        
+        if total_added > 0:
+            flash(f"Riparazione completata! Aggiunte {total_added} regole di transizione per {len(incomplete_clusters)} cluster incompleti.", "success")
+        else:
+            flash("Nessuna regola aggiunta. Tutti i cluster potrebbero essere già completi.", "info")
+            
+        return redirect(url_for('manage_cambio_colori'))
+        
+    except Exception as e:
+        print(f"Errore in repair_complete_clusters: {e}")
+        flash(f"Errore durante la riparazione: {e}", "danger")
+        return redirect(url_for('manage_cambio_colori'))
+
 @app.route('/manage/cambio_colori', methods=['GET', 'POST'])
 def manage_cambio_colori():
     # Sincronizza i cluster esistenti con i source_cluster
@@ -1385,48 +1585,30 @@ def manage_cambio_colori():
     # siano disponibili anche in 'Gestione Cambio Colori'
     sync_clusters_to_source_clusters()
     
-    new_source_cluster_form = NewSourceClusterForm(prefix="new_source")
+    new_cambio_colori_form = NewCambioColoriForm(prefix="new_transition")
     add_row_form = CambioColoriRowForm(prefix="add_row") # Prefisso per evitare conflitti se più form
 
-    if new_source_cluster_form.validate_on_submit() and new_source_cluster_form.submit.data:
-        # Ottieni il nome del nuovo source cluster
-        source_cluster_name = new_source_cluster_form.source_cluster_name.data.strip()
+    if new_cambio_colori_form.validate_on_submit() and new_cambio_colori_form.submit.data:
+        # Aggiungi una nuova transizione
+        success = add_cambio_colori_row(
+            source_cluster=new_cambio_colori_form.source_cluster.data.strip(),
+            target_cluster=new_cambio_colori_form.target_cluster.data.strip(),
+            peso=new_cambio_colori_form.peso.data,
+            transition_colors="[]",
+            required_trigger_type=new_cambio_colori_form.required_trigger_type.data.strip() if new_cambio_colori_form.required_trigger_type.data else None
+        )
         
-        # Verifica se il source cluster esiste già
-        existing_source_clusters = get_unique_source_clusters()
-        if source_cluster_name in existing_source_clusters:
-            flash(f"Il source cluster '{source_cluster_name}' esiste già. Aggiungi regole di transizione utilizzando il form sotto.", "info")
+        if success:
+            flash(f"Nuova transizione aggiunta con successo.", "success")
         else:
-            # Ottieni tutti i cluster esistenti per creare una regola di esempio
-            existing_clusters = get_unique_clusters()
-            if existing_clusters:
-                # Scegli un cluster di destinazione (diverso dal source se possibile)
-                target_clusters = [c for c in existing_clusters if c != source_cluster_name]
-                target_cluster = target_clusters[0] if target_clusters else existing_clusters[0]
-                
-                # Aggiungi una regola di transizione di esempio
-                success = add_cambio_colori_row(
-                    source_cluster=source_cluster_name,
-                    target_cluster=target_cluster,
-                    peso=100,  # Peso di default
-                    transition_colors="[]",  # Nessun colore di transizione
-                    required_trigger_type=None  # Nessun trigger richiesto
-                )
-                
-                if success:
-                    flash(f"Nuovo source cluster '{source_cluster_name}' creato con successo con una regola di transizione di esempio verso '{target_cluster}'. Aggiungi altre regole per completarlo.", "success")
-                else:
-                    flash(f"Errore durante la creazione del source cluster '{source_cluster_name}'.", "danger")
-            else:
-                # Se non ci sono cluster, suggerisci di crearne prima uno
-                flash(f"Nuovo source cluster '{source_cluster_name}' registrato. Prima di aggiungere regole di transizione, crea almeno un cluster di destinazione nella sezione 'Gestione Cluster Colori'.", "warning")
+            flash(f"Errore durante l'aggiunta della transizione.", "danger")
         
         return redirect(url_for('manage_cambio_colori'))
     
     grouped_rules = get_all_cambio_colori_grouped()
     return render_template('manage_cambio_colori.html',
                            grouped_rules=grouped_rules,
-                           new_source_cluster_form=new_source_cluster_form,
+                           new_cambio_colori_form=new_cambio_colori_form,
                            add_row_form_template=CambioColoriRowForm()) # Passa una istanza per il template del form di aggiunta
 
 @app.route('/manage/cambio_colori/add_row/<source_cluster>', methods=['POST'])
@@ -1504,14 +1686,86 @@ def manage_cluster_colori():
         if cluster_name in existing_clusters:
             flash(f"Il cluster '{cluster_name}' esiste già. Aggiungi codici colore utilizzando il form sotto.", "info")
         else:
-            # Aggiungi un colore di esempio per inizializzare il cluster
+            # Determina il codice colore da utilizzare
+            # Se l'utente ha inserito un codice colore, usalo, altrimenti usa il default
+            initial_color_code = new_cluster_form.color_code.data.strip() if new_cluster_form.color_code.data else "RAL9016"
+            
+            # Aggiungi il primo colore per inizializzare il cluster
             success = add_cluster_colori_row(
                 cluster=cluster_name,
-                color_code="RAL9016"  # Colore bianco di default
+                color_code=initial_color_code
             )
             
             if success:
-                flash(f"Nuovo cluster '{cluster_name}' creato con successo con un colore di esempio (RAL9016). Aggiungi altri codici colore per completarlo.", "success")
+                if new_cluster_form.color_code.data:
+                    flash(f"Nuovo cluster '{cluster_name}' creato con successo con il colore '{initial_color_code}'.", "success")
+                else:
+                    flash(f"Nuovo cluster '{cluster_name}' creato con successo con un colore di esempio (RAL9016).", "success")
+                
+                # AGGIORNAMENTO AUTOMATICO: Aggiungi questo nuovo cluster come target per tutti i source_cluster esistenti
+                existing_source_clusters = get_unique_source_clusters()
+                if existing_source_clusters:
+                    transitions_added = 0
+                    total_sources = len(existing_source_clusters)
+                    
+                    for source_cluster in existing_source_clusters:
+                        # Verifica se la regola esiste già
+                        existing_rules = get_cambio_colori_by_source_target(source_cluster, cluster_name)
+                        if not existing_rules:  # Solo se non esiste già
+                            # Determina il peso di default
+                            if source_cluster == cluster_name:
+                                default_peso = 1  # Transizione interna: peso basso
+                            else:
+                                default_peso = 50  # Transizione esterna: peso medio
+                                
+                            transition_success = add_cambio_colori_row(
+                                source_cluster=source_cluster,
+                                target_cluster=cluster_name,
+                                peso=default_peso,
+                                transition_colors="[]",
+                                required_trigger_type=None
+                            )
+                            
+                            if transition_success:
+                                transitions_added += 1
+                    
+                    if transitions_added > 0:
+                        flash(f"Aggiunte automaticamente {transitions_added} regole di transizione verso il nuovo cluster '{cluster_name}' nella sezione 'Gestione Cambio Colori'.", "info")
+                    elif total_sources > 0:
+                        flash(f"Le regole di transizione verso '{cluster_name}' esistevano già per tutti i source cluster.", "info")
+                
+                # PARTE 2: Aggiungi il nuovo cluster come SOURCE CLUSTER con regole verso tutti i cluster esistenti (incluso se stesso)
+                all_clusters = get_unique_clusters()  # Ricarica per includere il nuovo cluster
+                if all_clusters:
+                    source_transitions_added = 0
+                    total_targets = len(all_clusters)
+                    
+                    for target_cluster in all_clusters:
+                        # Verifica se la regola esiste già
+                        existing_rules = get_cambio_colori_by_source_target(cluster_name, target_cluster)
+                        if not existing_rules:  # Solo se non esiste già
+                            # Determina il peso di default
+                            if cluster_name == target_cluster:
+                                default_peso = 1  # Transizione interna: peso basso
+                            else:
+                                default_peso = 50  # Transizione esterna: peso medio
+                                
+                            source_transition_success = add_cambio_colori_row(
+                                source_cluster=cluster_name,
+                                target_cluster=target_cluster,
+                                peso=default_peso,
+                                transition_colors="[]",
+                                required_trigger_type=None
+                            )
+                            
+                            if source_transition_success:
+                                source_transitions_added += 1
+                    
+                    if source_transitions_added > 0:
+                        flash(f"Creato automaticamente il source cluster '{cluster_name}' con {source_transitions_added} regole di transizione verso tutti i cluster.", "info")
+                    elif total_targets > 0:
+                        flash(f"Il source cluster '{cluster_name}' esisteva già con tutte le regole necessarie.", "info")
+                        
             else:
                 flash(f"Errore durante la creazione del cluster '{cluster_name}'.", "danger")
         
@@ -2451,3 +2705,6 @@ def api_optimize_with_locked_colors(cabin_id):
     except Exception as e:
         logger.error(f"Errore in api_optimize_with_locked_colors: {e}")
         return jsonify({"error": str(e)}), 500
+
+if __name__ == '__main__':
+    app.run(debug=True, host='0.0.0.0', port=5001)

@@ -54,6 +54,13 @@ class NewSourceClusterForm(CSRFDisabledForm):
     source_cluster_name = StringField('Nuovo Source Cluster:', validators=[DataRequired()])
     submit = SubmitField('Aggiungi Source Cluster')
 
+class NewCambioColoriForm(CSRFDisabledForm):
+    source_cluster = StringField('Source Cluster:', validators=[DataRequired()])
+    target_cluster = StringField('Target Cluster:', validators=[DataRequired()])
+    peso = IntegerField('Peso:', validators=[DataRequired(), NumberRange(min=0)])
+    required_trigger_type = StringField('Required Trigger Type:', validators=[Optional()])
+    submit = SubmitField('Aggiungi Transizione')
+
 class ClusterColoriRowForm(CSRFDisabledForm):
     cluster_name = HiddenField() # Usato per sapere a quale gruppo aggiungere
     color_code = StringField('Codice Colore:', validators=[DataRequired()])
@@ -61,4 +68,5 @@ class ClusterColoriRowForm(CSRFDisabledForm):
 
 class NewClusterForm(CSRFDisabledForm):
     cluster_name = StringField('Nuovo Nome Cluster:', validators=[DataRequired()])
+    color_code = StringField('Primo Codice Colore (Opzionale):', validators=[Optional()])
     submit = SubmitField('Aggiungi Cluster')
