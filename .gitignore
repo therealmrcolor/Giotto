@@ -8,6 +8,13 @@ backend/.coverage
 ._*
 .Spotlight-V100
 .Trashes
+
+# File Icon? di macOS (causano problemi con Git)
+Icon?
+Icon
+**/Icon?
+**/Icon
+**/.DS_Store
 ehthumbs.db
 Thumbs.db
 Icon?
