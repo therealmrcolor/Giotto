@@ -161,6 +161,7 @@ def init_db():
                 sequence_order INTEGER,
                 cabin_id INTEGER DEFAULT 1,
                 is_prioritized INTEGER DEFAULT 0,
+                line TEXT,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
             ''')
@@ -177,7 +178,8 @@ def init_db():
                 'sequence_type': 'TEXT', 
                 'cabin_id': 'INTEGER DEFAULT 1',
                 'is_prioritized': 'INTEGER DEFAULT 0',
-                'sequence_order': 'INTEGER'
+                'sequence_order': 'INTEGER',
+                'line': 'TEXT'
             }
             
             # Aggiungi le colonne mancanti
@@ -1023,7 +1025,7 @@ def optimize():
                         sequence_order INTEGER,
                         completed INTEGER DEFAULT 0,
                         in_execution INTEGER DEFAULT 0,
-                        line TEXT DEFAULT 'Cabina 1',
+                        line TEXT,
                         m2 REAL DEFAULT 0.0,
                         input_sequence INTEGER,
                         ch_value REAL,
@@ -1079,8 +1081,8 @@ def optimize():
                     INSERT INTO optimization_colors (
                         color_code, color_type, cluster, sequence_order, 
                         completed, in_execution, input_sequence, ch_value,
-                        lunghezza_ordine, sequence_type, cabin_id, is_prioritized
-                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                        lunghezza_ordine, sequence_type, cabin_id, is_prioritized, line
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                     ''', (
                         color_code, 
                         color_type, 
@@ -1093,7 +1095,8 @@ def optimize():
                         lunghezza_ordine,
                         sequence_type,
                         cabin_id,
-                        is_prioritized
+                        is_prioritized,
+                        color.get('line')
                     ))
                     
                     # Ottieni l'ID generato e aggiungilo all'oggetto colore
@@ -1982,7 +1985,7 @@ def api_get_cabin_colors(cabin_id):
         cursor = conn.cursor()
         cursor.execute("""
             SELECT id, color_code, color_type, cluster, ch_value, lunghezza_ordine, 
-                   input_sequence, sequence_type, completed, in_execution, sequence_order
+                   input_sequence, sequence_type, completed, in_execution, sequence_order, line
             FROM optimization_colors 
             WHERE cabin_id = ? 
             ORDER BY sequence_order ASC, id ASC
@@ -2001,7 +2004,8 @@ def api_get_cabin_colors(cabin_id):
                 "sequence_type": row[7],
                 "completed": bool(row[8]),
                 "in_execution": bool(row[9]),
-                "sequence_order": row[10]
+                "sequence_order": row[10],
+                "line": row[11]
             })
         
         conn.close()
@@ -2175,22 +2179,27 @@ def api_optimize():
                 # Pulisci i dati esistenti
                 cursor.execute("DELETE FROM optimization_colors")
                 
+                # Crea una mappa dei dati originali per preservare i campi extra
+                original_data_map = {}
+                for color in colors_today:
+                    original_data_map[color['code']] = color
+                
                 # Ottieni la lista dei reintegri prioritari
                 prioritized_reintegrations = backend_payload.get('prioritized_reintegrations', [])
                 
                 if 'cabina_1' in backend_results and 'cabina_2' in backend_results:
                     # Risultati per cabine separate
-                    if backend_results['cabina_1'].get('ordered_colors'):
-                        save_colors_to_db_internal(cursor, backend_results['cabina_1']['ordered_colors'], 1, prioritized_reintegrations)
+                    if backend_results['cabina_1'] and backend_results['cabina_1'].get('ordered_colors'):
+                        save_colors_to_db_internal_with_original_data(cursor, backend_results['cabina_1']['ordered_colors'], 1, prioritized_reintegrations, original_data_map)
                     
-                    if backend_results['cabina_2'].get('ordered_colors'):
-                        save_colors_to_db_internal(cursor, backend_results['cabina_2']['ordered_colors'], 2, prioritized_reintegrations)
+                    if backend_results['cabina_2'] and backend_results['cabina_2'].get('ordered_colors'):
+                        save_colors_to_db_internal_with_original_data(cursor, backend_results['cabina_2']['ordered_colors'], 2, prioritized_reintegrations, original_data_map)
                 else:
                     # Risultati standard - separa per lunghezza ordine
                     if backend_results.get('ordered_colors'):
                         for idx, color in enumerate(backend_results['ordered_colors']):
                             cabin_id = 2 if color.get('lunghezza_ordine') == 'lungo' else 1
-                            save_color_to_db_internal_simple(cursor, color, idx, cabin_id)
+                            save_color_to_db_internal_simple_with_original_data(cursor, color, idx, cabin_id, original_data_map)
                 
                 conn.commit()
             except Exception as e:
@@ -2215,8 +2224,8 @@ def save_color_to_db_internal(cursor, color, cabin_id, position):
     cursor.execute("""
         INSERT INTO optimization_colors 
         (color_code, color_type, cluster, input_sequence, sequence_type, ch_value, lunghezza_ordine, 
-         cabin_id, sequence_order, locked, position)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+         cabin_id, sequence_order, locked, position, line)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     """, (
         color_code,
         color.get('type', ''),
@@ -2228,7 +2237,8 @@ def save_color_to_db_internal(cursor, color, cabin_id, position):
         cabin_id,
         position,
         color.get('locked', False),
-        color.get('position', position)
+        color.get('position', position),
+        color.get('line')
     ))
 
 def save_colors_to_db_internal(cursor, colors_list, cabin_id, prioritized_reintegrations=None):
@@ -2250,8 +2260,8 @@ def save_color_to_db_internal_with_priority(cursor, color, sequence_order, cabin
         INSERT INTO optimization_colors (
             color_code, color_type, cluster, ch_value, 
             lunghezza_ordine, input_sequence, sequence_type,
-            cabin_id, sequence_order, locked, position
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            cabin_id, sequence_order, locked, position, line
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     ''', (
         color_code,
         color.get('type', color.get('color_type', '')),
@@ -2263,7 +2273,8 @@ def save_color_to_db_internal_with_priority(cursor, color, sequence_order, cabin
         cabin_id,
         sequence_order,
         color.get('locked', False),
-        color.get('position', sequence_order)
+        color.get('position', sequence_order),
+        color.get('line')
     ))
 
 def save_color_to_db_internal_simple(cursor, color, position, cabin_id):
@@ -2271,6 +2282,71 @@ def save_color_to_db_internal_simple(cursor, color, position, cabin_id):
     Versione semplificata per compatibilità.
     """
     save_color_to_db_internal(cursor, color, cabin_id, position)
+
+def save_colors_to_db_internal_with_original_data(cursor, colors_list, cabin_id, prioritized_reintegrations=None, original_data_map=None):
+    """Helper function per salvare colori nel database preservando i dati originali."""
+    for idx, color in enumerate(colors_list):
+        save_color_to_db_internal_with_priority_and_original_data(cursor, color, idx, cabin_id, prioritized_reintegrations, original_data_map)
+
+def save_color_to_db_internal_with_priority_and_original_data(cursor, color, sequence_order, cabin_id, prioritized_reintegrations=None, original_data_map=None):
+    """Helper function per salvare un singolo colore nel database con supporto priorità e dati originali."""
+    color_code = color.get('code', color.get('color_code', ''))
+    is_prioritized = 0
+    
+    # Controlla se il colore è tra i reintegri prioritari
+    if prioritized_reintegrations and color_code in prioritized_reintegrations:
+        is_prioritized = 1
+        logger.info(f"Impostando colore {color_code} come prioritario nel database")
+    
+    # Cerca i dati originali per preservare i campi extra
+    original_color = original_data_map.get(color_code, {}) if original_data_map else {}
+    
+    cursor.execute('''
+        INSERT INTO optimization_colors (
+            color_code, color_type, cluster, ch_value, 
+            lunghezza_ordine, input_sequence, sequence_type,
+            cabin_id, sequence_order, locked, position, line
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    ''', (
+        color_code,
+        color.get('type', color.get('color_type', '')),
+        color.get('cluster', ''),
+        color.get('CH', color.get('ch_value', original_color.get('CH'))),
+        color.get('lunghezza_ordine', ''),
+        color.get('sequence', color.get('input_sequence', original_color.get('sequence'))),
+        color.get('sequence_type', original_color.get('sequence_type')),
+        cabin_id,
+        sequence_order,
+        color.get('locked', False),
+        color.get('position', sequence_order),
+        color.get('line', original_color.get('line'))  # Usa prima il nuovo valore line, poi quello originale
+    ))
+
+def save_color_to_db_internal_simple_with_original_data(cursor, color, position, cabin_id, original_data_map=None):
+    """Versione semplificata per compatibilità con dati originali."""
+    color_code = color.get('code', color.get('color_code', ''))
+    original_color = original_data_map.get(color_code, {}) if original_data_map else {}
+    
+    cursor.execute('''
+        INSERT INTO optimization_colors (
+            color_code, color_type, cluster, ch_value, 
+            lunghezza_ordine, input_sequence, sequence_type,
+            cabin_id, sequence_order, locked, position, line
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    ''', (
+        color_code,
+        color.get('type', color.get('color_type', '')),
+        color.get('cluster', ''),
+        color.get('CH', color.get('ch_value', original_color.get('CH'))),
+        color.get('lunghezza_ordine', ''),
+        color.get('sequence', color.get('input_sequence', original_color.get('sequence'))),
+        color.get('sequence_type', original_color.get('sequence_type')),
+        cabin_id,
+        position,
+        color.get('locked', False),
+        color.get('position', position),
+        color.get('line', original_color.get('line'))  # Usa prima il nuovo valore line, poi quello originale
+    ))
 
 @app.route('/api/clear-all', methods=['POST'])
 def api_clear_all():
@@ -2355,10 +2431,15 @@ def api_cabin_optimize_partial(cabin_id):
                 # Rimuovi solo i colori della cabina specifica
                 cursor.execute("DELETE FROM optimization_colors WHERE cabin_id = ?", (cabin_id,))
                 
+                # Crea una mappa dei dati originali per preservare i campi extra
+                original_data_map = {}
+                for color in data['colors']:
+                    original_data_map[color['code']] = color
+                
                 # Salva i nuovi risultati
                 if backend_results.get('ordered_colors'):
                     prioritized_reintegrations = backend_payload.get('prioritized_reintegrations', [])
-                    save_colors_to_db_internal(cursor, backend_results['ordered_colors'], cabin_id, prioritized_reintegrations)
+                    save_colors_to_db_internal_with_original_data(cursor, backend_results['ordered_colors'], cabin_id, prioritized_reintegrations, original_data_map)
                 
                 conn.commit()
                 logger.info(f"Risultati ottimizzazione parziale salvati per cabina {cabin_id}")
@@ -2577,7 +2658,7 @@ def api_reorder_colors(cabin_id):
             # Recupera tutti i colori attuali per questa cabina
             cursor.execute("""
                 SELECT color_code, color_type, cluster, input_sequence, sequence_type, 
-                       ch_value, lunghezza_ordine, locked, position, sequence_order
+                       ch_value, lunghezza_ordine, locked, position, sequence_order, line
                 FROM optimization_colors 
                 WHERE cabin_id = ?
                 ORDER BY sequence_order
@@ -2603,8 +2684,8 @@ def api_reorder_colors(cabin_id):
                 cursor.execute("""
                     INSERT INTO optimization_colors 
                     (color_code, color_type, cluster, input_sequence, sequence_type, ch_value, lunghezza_ordine, 
-                     cabin_id, sequence_order, locked, position)
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                     cabin_id, sequence_order, locked, position, line)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """, (
                     color_data[0],  # color_code
                     color_data[1],  # color_type
@@ -2616,7 +2697,8 @@ def api_reorder_colors(cabin_id):
                     cabin_id,
                     new_pos,       # sequence_order (nuova posizione)
                     color_data[7],  # locked
-                    new_pos        # position
+                    new_pos,       # position
+                    color_data[10] if len(color_data) > 10 else None  # line
                 ))
             
             conn.commit()

@@ -175,6 +175,50 @@
     transform: scale(1.05);
 }
 
+/* Stili per funzionalità paste CSV */
+#cabinPasteMessage {
+    border-left: 4px solid #0d6efd;
+    animation: slideIn 0.3s ease-out;
+}
+
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.highlight-paste {
+    background-color: #fff3cd !important;
+    border-color: #ffc107 !important;
+    animation: highlightPulse 0.6s ease-in-out;
+}
+
+@keyframes highlightPulse {
+    0% { background-color: #fff3cd; }
+    50% { background-color: #ffeaa7; }
+    100% { background-color: #fff3cd; }
+}
+
+/* Miglioramenti per tabella temporanea */
+.table-sm .form-select-sm {
+    font-size: 0.875rem;
+    padding: 0.25rem 0.5rem;
+}
+
+.color-code {
+    font-family: 'Courier New', monospace;
+    font-weight: bold;
+    padding: 2px 6px;
+    background-color: #f8f9fa;
+    border-radius: 3px;
+    border: 1px solid #dee2e6;
+}
+
 /* Assicura che la tabella colori sia completamente visibile */
 #colorsTable {
     height: auto !important;
@@ -268,6 +312,17 @@
             </div>
             <div class="card-body">
                 <form id="addColorForm">
+                    <!-- Info per paste CSV -->
+                    <div class="alert alert-info alert-sm mb-3">
+                        <small>
+                            <strong><i class="fas fa-info-circle me-1"></i>Suggerimento:</strong> 
+                            Puoi incollare più colori contemporaneamente nel campo "Codice Colore"!<br>
+                            <strong>Formato CSV:</strong> <code>Codice,Tipo,Sequenza,Linea,CH</code> (es. <code>RAL9005,F,1,Linea A,25.5</code>)<br>
+                            <strong>Formato semplice:</strong> Un codice colore per riga (dovrai impostare il tipo manualmente)<br>
+                            <strong><i class="fas fa-lock me-1"></i>Blocchi:</strong> I colori bloccati 🔒 manterranno la loro posizione durante l'ottimizzazione
+                        </small>
+                    </div>
+                    
                     <div class="row">
                         <div class="col-md-2">
                             <label for="colorCode" class="form-label">Codice Colore</label>
@@ -284,33 +339,17 @@
                                 <option value="E">E - Estetico</option>
                             </select>
                         </div>
-                        <div class="col-md-2">
-                            <label for="colorCluster" class="form-label">Cluster</label>
-                            <select class="form-select" id="colorCluster" name="colorCluster">
-                                <option value="">Auto-determina</option>
-                            </select>
-                        </div>
-                        <div class="col-md-1">
-                            <label for="colorCH" class="form-label">CH</label>
-                            <input type="number" step="0.1" class="form-control" id="colorCH" name="colorCH" placeholder="25.5">
-                        </div>
-                        <div class="col-md-2">
-                            <label for="colorLength" class="form-label">Lunghezza</label>
-                            <select class="form-select" id="colorLength" name="colorLength" required>
-                                <option value="{{ 'corto' if cabin_id == 1 else 'lungo' }}" selected>{{ 'Corto' if cabin_id == 1 else 'Lungo' }}</option>
-                            </select>
-                        </div>
-                        <div class="col-md-1">
-                            <label for="colorSequence" class="form-label">Seq Input</label>
+                        <div class="col-md-3">
+                            <label for="colorSequence" class="form-label">Sequenza</label>
                             <input type="number" class="form-control" id="colorSequence" name="colorSequence" placeholder="1">
                         </div>
                         <div class="col-md-2">
-                            <label for="colorSequenceType" class="form-label">Tipo Seq</label>
-                            <select class="form-select" id="colorSequenceType" name="colorSequenceType">
-                                <option value="">Nessuno</option>
-                                <option value="piccola">Piccola</option>
-                                <option value="successiva">Successiva</option>
-                            </select>
+                            <label for="colorLine" class="form-label">Linea</label>
+                            <input type="text" class="form-control" id="colorLine" name="colorLine" placeholder="es. Linea A">
+                        </div>
+                        <div class="col-md-3">
+                            <label for="colorCH" class="form-label">CH</label>
+                            <input type="number" step="0.1" class="form-control" id="colorCH" name="colorCH" placeholder="25.5">
                         </div>
                     </div>
                     <div class="row mt-3">
@@ -324,6 +363,19 @@
                             <button type="button" class="btn btn-warning" onclick="clearTemporaryList()">
                                 <i class="fas fa-trash me-2"></i>Pulisci Lista Temporanea
                             </button>
+                            <div class="btn-group ms-2" role="group">
+                                <button type="button" class="btn btn-outline-secondary btn-sm dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+                                    <i class="fas fa-flask me-1"></i>Test CSV
+                                </button>
+                                <ul class="dropdown-menu">
+                                    <li><a class="dropdown-item" href="#" onclick="insertTestCSVData()">
+                                        <i class="fas fa-file-csv me-2"></i>Test CSV Completo
+                                    </a></li>
+                                    <li><a class="dropdown-item" href="#" onclick="insertTestSimpleData()">
+                                        <i class="fas fa-list me-2"></i>Test Codici Semplici
+                                    </a></li>
+                                </ul>
+                            </div>
                         </div>
                     </div>
                 </form>
@@ -350,11 +402,9 @@
                             <tr>
                                 <th>Codice Colore</th>
                                 <th>Tipo</th>
-                                <th>Cluster</th>
+                                <th>Sequenza</th>
+                                <th>Linea</th>
                                 <th>CH</th>
-                                <th>Lunghezza</th>
-                                <th>Seq Input</th>
-                                <th>Tipo Seq</th>
                                 <th>Azioni</th>
                             </tr>
                         </thead>
@@ -392,11 +442,10 @@
                                 <th>Index</th>
                                 <th>Codice Colore</th>
                                 <th>Tipo</th>
+                                <th>Sequenza</th>
+                                <th>Linea</th>
                                 <th>Cluster</th>
                                 <th>CH</th>
-                                <th>Lunghezza</th>
-                                <th>Seq Input</th>
-                                <th>Tipo Seq</th>
                                 <th><i class="fas fa-lock"></i> Bloccato</th>
                                 <th>In Esecuzione</th>
                                 <th>Completato</th>
@@ -530,7 +579,367 @@ let clusterOrder = [];
 $(document).ready(function() {
     loadColorsList();
     loadClusterOrder();
+    
+    // Aggiungi gestione paste CSV al campo colorCode
+    setupCabinPasteHandler();
+    
+    // Test disponibilità API con blocchi
+    testOptimizeWithLocksAPI();
 });
+
+// Test per verificare se l'API optimize-with-locks è disponibile
+function testOptimizeWithLocksAPI() {
+    console.log('Testing optimize-with-locks API availability...');
+    
+    // Fai una richiesta di test per vedere se l'endpoint esiste
+    $.ajax({
+        url: `/api/cabin/${cabinId}/optimize-locked`,
+        method: 'OPTIONS', // Usa OPTIONS per verificare senza inviare dati
+        timeout: 5000,
+        success: function() {
+            console.log('✅ API optimize-locked disponibile');
+            window.optimizeWithLocksAvailable = true;
+        },
+        error: function(xhr) {
+            if (xhr.status === 404) {
+                console.log('⚠️ API optimize-locked non disponibile (404)');
+                window.optimizeWithLocksAvailable = false;
+                
+                // Aggiorna l'interfaccia per avvisare l'utente
+                updateUIForMissingLocksAPI();
+            } else if (xhr.status === 405) {
+                // Method not allowed è OK, significa che l'endpoint esiste
+                console.log('✅ API optimize-locked disponibile (405 per OPTIONS è normale)');
+                window.optimizeWithLocksAvailable = true;
+            } else {
+                console.log('⚠️ Errore nel test API optimize-locked:', xhr.status);
+                window.optimizeWithLocksAvailable = false;
+            }
+        }
+    });
+}
+
+// Aggiorna UI quando l'API con blocchi non è disponibile
+function updateUIForMissingLocksAPI() {
+    // Aggiungi avviso nell'interfaccia
+    const alertHtml = `
+        <div class="alert alert-warning alert-sm mt-2" id="locksAPIWarning">
+            <i class="fas fa-exclamation-triangle me-2"></i>
+            <strong>Attenzione:</strong> La funzionalità di rispetto dei blocchi non è completamente disponibile. 
+            L'ottimizzazione userà il metodo standard.
+        </div>
+    `;
+    
+    // Aggiungi l'avviso dopo il form di aggiunta colore
+    if ($('#locksAPIWarning').length === 0) {
+        $('#addColorForm').closest('.card').after(alertHtml);
+    }
+    
+    // Modifica il testo del pulsante di ottimizzazione con blocchi
+    const optimizeWithLocksBtn = $('#optimizeWithLocksBtn');
+    if (optimizeWithLocksBtn.length > 0) {
+        optimizeWithLocksBtn.find('.btn-text').text('Ottimizza (blocchi limitati)');
+        optimizeWithLocksBtn.addClass('btn-outline-warning').removeClass('btn-warning');
+    }
+}
+
+// Configura il gestore di paste per il form della cabina
+function setupCabinPasteHandler() {
+    const colorCodeInput = $('#colorCode');
+    
+    colorCodeInput.on('paste', function(e) {
+        // Previeni il comportamento di default del paste
+        e.preventDefault();
+        
+        // Ottieni il contenuto dalla clipboard
+        const clipboardData = e.originalEvent.clipboardData || window.clipboardData;
+        const pastedText = clipboardData.getData('text/plain').trim();
+        
+        console.log('Paste rilevato nel campo colorCode:', pastedText);
+        
+        // Controlla se il testo contiene più righe
+        const lines = pastedText.split(/[\n\r]+/).map(line => line.trim()).filter(line => line);
+        
+        if (lines.length > 1) {
+            // Paste multiplo: gestisci le righe separate
+            handleCabinMultiLinePaste(lines);
+        } else {
+            // Paste singolo: inserisci normalmente
+            $(this).val(pastedText);
+        }
+    });
+}
+
+// Gestisce il paste di più righe di codici colore nella cabina
+function handleCabinMultiLinePaste(lines) {
+    console.log('Gestendo paste multiplo nella cabina:', lines);
+    
+    // Determina se i dati sono in formato CSV (Codice,Tipologia,Sequenza,Linea,CH)
+    const isCSVFormat = lines.some(line => line.includes(',') && line.split(',').length >= 2);
+    
+    if (isCSVFormat) {
+        handleCabinCSVPaste(lines);
+    } else {
+        handleCabinSimplePaste(lines);
+    }
+}
+
+// Gestisce il paste di dati in formato CSV nella cabina
+function handleCabinCSVPaste(lines) {
+    console.log('Gestendo paste CSV nella cabina:', lines);
+    
+    let validRows = 0;
+    let processedData = [];
+    
+    // Analizza ogni riga CSV
+    lines.forEach((line, index) => {
+        const trimmedLine = line.trim();
+        if (!trimmedLine) return;
+        
+        const parts = trimmedLine.split(',').map(part => part.trim());
+        if (parts.length >= 2) {
+            const colorCode = parts[0];
+            const colorType = parts[1];
+            const colorSequence = parts.length >= 3 ? parts[2] : '';
+            const colorLine = parts.length >= 4 ? parts[3] : '';
+            const colorCH = parts.length >= 5 ? parts[4] : '';
+            
+            if (colorCode && colorType) {
+                processedData.push({
+                    code: colorCode,
+                    type: colorType,
+                    sequence: colorSequence,
+                    line: colorLine,
+                    CH: colorCH,
+                    index: index
+                });
+                validRows++;
+            }
+        }
+    });
+    
+    if (processedData.length === 0) {
+        showCabinMessage('⚠️ Formato CSV non valido. Usa: Codice,Tipo,Sequenza,Linea,CH', 'warning');
+        return;
+    }
+    
+    // Aggiungi tutti i colori alla lista temporanea
+    processedData.forEach(data => {
+        const colorData = {
+            code: data.code,
+            type: data.type,
+            line: data.line || null,
+            CH: parseFloat(data.CH) || null,
+            sequence: parseInt(data.sequence) || null,
+            lunghezza_ordine: cabinId == 1 ? 'corto' : 'lungo',
+            temp_id: Date.now() + Math.random() // ID temporaneo unico
+        };
+        
+        if (validateFormData(colorData)) {
+            temporaryList.push(colorData);
+        }
+    });
+    
+    // Aggiorna la visualizzazione della lista temporanea
+    updateTemporaryListDisplay();
+    
+    // Pulisci il form
+    clearForm();
+    
+    showCabinMessage(`✅ Importati ${validRows} colori dal CSV nella lista temporanea!`, 'success');
+}
+
+// Gestisce il paste semplice (solo codici colore) nella cabina
+function handleCabinSimplePaste(lines) {
+    console.log('Gestendo paste semplice nella cabina:', lines);
+    
+    // Per il paste semplice, aggiungiamo solo i codici colore alla lista temporanea
+    let addedCount = 0;
+    
+    lines.forEach(line => {
+        const colorCode = line.trim();
+        if (colorCode) {
+            const colorData = {
+                code: colorCode,
+                type: '', // L'utente dovrà selezionare il tipo
+                line: null,
+                CH: null,
+                sequence: null,
+                lunghezza_ordine: cabinId == 1 ? 'corto' : 'lungo',
+                temp_id: Date.now() + Math.random() + addedCount
+            };
+            
+            // Non validiamo completamente perché il tipo è vuoto
+            temporaryList.push(colorData);
+            addedCount++;
+        }
+    });
+    
+    if (addedCount > 0) {
+        updateTemporaryListDisplay();
+        clearForm();
+        showCabinMessage(`✅ Aggiunti ${addedCount} codici colore alla lista temporanea. Ricorda di impostare il tipo per ciascun colore!`, 'info');
+    }
+}
+
+// Mostra messaggio specifico per la cabina
+function showCabinMessage(message, type = 'info') {
+    // Crea o aggiorna il messaggio
+    let messageDiv = $('#cabinPasteMessage');
+    if (messageDiv.length === 0) {
+        messageDiv = $(`
+            <div id="cabinPasteMessage" class="alert alert-dismissible fade show mt-2" role="alert">
+                <span class="message-text"></span>
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        `);
+        $('#addColorForm').after(messageDiv);
+    }
+    
+    // Mappa i tipi a classi Bootstrap
+    const typeClasses = {
+        'success': 'alert-success',
+        'info': 'alert-info',
+        'warning': 'alert-warning',
+        'error': 'alert-danger'
+    };
+    
+    // Aggiorna la classe e il messaggio
+    messageDiv.attr('class', `alert alert-dismissible fade show mt-2 ${typeClasses[type] || 'alert-info'}`);
+    messageDiv.find('.message-text').text(message);
+    
+    // Rimuovi automaticamente dopo 5 secondi
+    setTimeout(() => {
+        messageDiv.fadeOut(() => messageDiv.remove());
+    }, 5000);
+}
+
+// =============== FUNZIONI DI DEBUG ===============
+
+// Testa manualmente l'API optimize-with-locks
+function debugTestOptimizeWithLocks() {
+    console.log('=== DEBUG TEST OPTIMIZE WITH LOCKS ===');
+    
+    const testData = {
+        colors_today: [
+            {
+                code: 'RAL9005',
+                type: 'F',
+                locked: true,
+                lunghezza_ordine: cabinId == 1 ? 'corto' : 'lungo'
+            }
+        ],
+        prioritized_reintegrations: []
+    };
+    
+    console.log('Test data:', testData);
+    console.log('URL:', `/api/cabin/${cabinId}/optimize-locked`);
+    
+    $.ajax({
+        url: `/api/cabin/${cabinId}/optimize-locked`,
+        method: 'POST',
+        contentType: 'application/json',
+        data: JSON.stringify(testData),
+        timeout: 10000,
+        success: function(response) {
+            console.log('✅ Test successful:', response);
+            showCabinMessage('✅ Test API con blocchi riuscito!', 'success');
+        },
+        error: function(xhr, status, error) {
+            console.log('❌ Test failed:', {
+                status: xhr.status,
+                statusText: xhr.statusText,
+                responseText: xhr.responseText,
+                error: error
+            });
+            showCabinMessage(`❌ Test API fallito: ${xhr.status} - ${xhr.statusText}`, 'error');
+        }
+    });
+}
+
+// Test diretto dell'endpoint optimize-locked con dati semplici
+function testOptimizeLockedDirectly() {
+    console.log('=== TEST DIRETTO ENDPOINT OPTIMIZE-LOCKED ===');
+    
+    // Usa solo i colori esistenti per il test
+    const existingColors = colorsList.filter(c => !c.completed).map(c => ({
+        code: c.color_code || c.code,
+        type: c.color_type || c.type,
+        cluster: c.cluster,
+        locked: c.locked || false,
+        lunghezza_ordine: c.lunghezza_ordine || (cabinId == 1 ? 'corto' : 'lungo'),
+        CH: c.ch_value || c.CH,
+        line: c.line,
+        sequence: c.input_sequence || c.sequence,
+        sequence_type: c.sequence_type
+    }));
+    
+    const testData = {
+        colors_today: existingColors,
+        prioritized_reintegrations: []
+    };
+    
+    console.log('Test data:', testData);
+    console.log('URL:', `/api/cabin/${cabinId}/optimize-locked`);
+    
+    $.ajax({
+        url: `/api/cabin/${cabinId}/optimize-locked`,
+        method: 'POST',
+        contentType: 'application/json',
+        data: JSON.stringify(testData),
+        timeout: 10000,
+        success: function(response) {
+            console.log('✅ Test diretto riuscito:', response);
+            showCabinMessage('✅ Test diretto API con blocchi riuscito!', 'success');
+            loadColorsList(); // Ricarica i colori dopo il test
+        },
+        error: function(xhr, status, error) {
+            console.log('❌ Test diretto fallito:', {
+                status: xhr.status,
+                statusText: xhr.statusText,
+                responseText: xhr.responseText,
+                error: error
+            });
+            showCabinMessage(`❌ Test diretto fallito: ${xhr.status} - ${xhr.statusText}`, 'error');
+        }
+    });
+}
+
+// =============== FUNZIONI DI TEST PER CSV PASTE ===============
+
+// Inserisce dati CSV di test nel campo colorCode
+function insertTestCSVData() {
+    const testCSV = [
+        'RAL9005,F,1,Linea A,25.5',
+        'RAL9001,E,2,Linea B,20.1',
+        'RAL8005,K,3,Linea A,30.2',
+        'RAL7024,RE,4,Linea C,22.8'
+    ].join('\n');
+    
+    // Simula l'incolla nel campo colorCode
+    const colorCodeInput = document.getElementById('colorCode');
+    if (colorCodeInput) {
+        // Simula il paste
+        handleCabinMultiLinePaste(testCSV.split('\n'));
+        
+        showCabinMessage('🧪 Dati CSV di test inseriti!', 'info');
+    }
+}
+
+// Inserisce codici semplici di test
+function insertTestSimpleData() {
+    const testCodes = [
+        'RAL3020',
+        'RAL6005',
+        'RAL7011',
+        'RAL8019'
+    ].join('\n');
+    
+    // Simula l'incolla di codici semplici
+    handleCabinMultiLinePaste(testCodes.split('\n'));
+    
+    showCabinMessage('🧪 Codici colore di test inseriti! Ricorda di impostare i tipi.', 'info');
+}
 
 // Carica lista colori della cabina
 function loadColorsList() {
@@ -714,6 +1123,7 @@ function updateColorsTable() {
     
     if (colorsList.length === 0) {
         $('#emptyState').show();
+        updateOptimizeButtonState(); // Aggiorna lo stato del pulsante
         return;
     }
     
@@ -737,15 +1147,12 @@ function updateColorsTable() {
                 <td>
                     <span class="badge bg-secondary">${color.color_type}</span>
                 </td>
+                <td>${color.input_sequence || 'N/D'}</td>
+                <td>${color.line || 'N/D'}</td>
                 <td>
                     <span class="badge cluster-badge ${getClusterBadgeClass(color.cluster)}">${color.cluster || 'N/D'}</span>
                 </td>
                 <td>${color.ch_value || 'N/D'}</td>
-                <td>
-                    <span class="badge ${color.lunghezza_ordine === 'lungo' ? 'bg-success' : 'bg-primary'}">${color.lunghezza_ordine || 'N/D'}</span>
-                </td>
-                <td>${color.input_sequence || 'N/D'}</td>
-                <td>${color.sequence_type || 'N/D'}</td>
                 <td>
                     <button class="lock-toggle ${isLocked ? 'locked' : 'unlocked'}" 
                             onclick="toggleColorLock(${index})" 
@@ -776,6 +1183,27 @@ function updateColorsTable() {
     
     // Reinizializza il drag & drop HTML5 dopo aver aggiornato la tabella
     initColorDragDrop();
+    
+    // Aggiorna lo stato del pulsante di ottimizzazione
+    updateOptimizeButtonState();
+}
+
+// Aggiorna lo stato del pulsante "Aggiorna e Ricalcola" in base ai blocchi
+function updateOptimizeButtonState() {
+    const optimizeBtn = $('button:contains("Aggiorna e Ricalcola")');
+    const lockedCount = colorsList.filter(c => c.locked).length;
+    
+    if (lockedCount > 0) {
+        // Cambia l'icona e il testo per indicare che rispetterà i blocchi
+        optimizeBtn.html('<i class="fas fa-lock me-2"></i>Aggiorna e Ricalcola (con blocchi)');
+        optimizeBtn.removeClass('btn-primary').addClass('btn-warning');
+        optimizeBtn.attr('title', `Rispetterà ${lockedCount} colori bloccati durante l'ottimizzazione`);
+    } else {
+        // Ripristina l'aspetto normale
+        optimizeBtn.html('<i class="fas fa-cogs me-2"></i>Aggiorna e Ricalcola');
+        optimizeBtn.removeClass('btn-warning').addClass('btn-primary');
+        optimizeBtn.attr('title', 'Ottimizzazione standard senza vincoli');
+    }
 }
 
 // Ottieni classe CSS per badge cluster
@@ -822,11 +1250,10 @@ function getFormData() {
     return {
         code: $('#colorCode').val().trim(),
         type: $('#colorType').val(),
-        cluster: $('#colorCluster').val(),
+        line: $('#colorLine').val().trim() || null,
         CH: parseFloat($('#colorCH').val()) || null,
-        lunghezza_ordine: $('#colorLength').val(),
         sequence: parseInt($('#colorSequence').val()) || null,
-        sequence_type: $('#colorSequenceType').val() || null
+        lunghezza_ordine: cabinId == 1 ? 'corto' : 'lungo' // Determina automaticamente basato sulla cabina
     };
 }
 
@@ -838,10 +1265,6 @@ function validateFormData(data) {
     }
     if (!data.type) {
         alert('Seleziona il tipo di colore');
-        return false;
-    }
-    if (!data.lunghezza_ordine) {
-        alert('Seleziona la lunghezza ordine');
         return false;
     }
     return true;
@@ -863,15 +1286,30 @@ function updateTemporaryListDisplay() {
     tbody.empty();
     
     temporaryList.forEach((color, index) => {
+        // Crea campo tipo editabile se vuoto
+        let typeCell;
+        if (!color.type || color.type.trim() === '') {
+            typeCell = `
+                <select class="form-select form-select-sm" onchange="updateTemporaryColorType(${color.temp_id}, this.value)">
+                    <option value="">Seleziona tipo</option>
+                    <option value="R">R - Reintegro Urgente</option>
+                    <option value="RE">RE - Reintegro</option>
+                    <option value="F">F - Fisso</option>
+                    <option value="K">K - Kit</option>
+                    <option value="E">E - Estetico</option>
+                </select>
+            `;
+        } else {
+            typeCell = `<span class="badge bg-secondary">${color.type}</span>`;
+        }
+        
         const row = $(`
             <tr>
                 <td><span class="color-code">${color.code}</span></td>
-                <td><span class="badge bg-secondary">${color.type}</span></td>
-                <td>${color.cluster || 'Auto'}</td>
-                <td>${color.CH || 'N/D'}</td>
-                <td><span class="badge ${color.lunghezza_ordine === 'lungo' ? 'bg-success' : 'bg-primary'}">${color.lunghezza_ordine}</span></td>
+                <td>${typeCell}</td>
                 <td>${color.sequence || 'N/D'}</td>
-                <td>${color.sequence_type || 'N/D'}</td>
+                <td>${color.line || 'N/D'}</td>
+                <td>${color.CH || 'N/D'}</td>
                 <td>
                     <button class="btn btn-sm btn-outline-danger" onclick="removeFromTemporary(${color.temp_id})">
                         <i class="fas fa-trash"></i>
@@ -881,6 +1319,16 @@ function updateTemporaryListDisplay() {
         `);
         tbody.append(row);
     });
+}
+
+// Aggiorna il tipo di un colore nella lista temporanea
+function updateTemporaryColorType(tempId, newType) {
+    const colorIndex = temporaryList.findIndex(c => c.temp_id === tempId);
+    if (colorIndex !== -1) {
+        temporaryList[colorIndex].type = newType;
+        updateTemporaryListDisplay(); // Riaggiorna la visualizzazione
+        console.log(`Tipo aggiornato per colore temp_id ${tempId}: ${newType}`);
+    }
 }
 
 // Rimuovi dalla lista temporanea
@@ -898,14 +1346,13 @@ function clearTemporaryList() {
 // Pulisci form
 function clearForm() {
     $('#addColorForm')[0].reset();
-    $('#colorLength').val(cabinId === 1 ? 'corto' : 'lungo');
 }
 
 // Aggiungi e ottimizza
 function addAndOptimize() {
     // Aggiungi colore corrente alla lista temporanea se il form è compilato E valido
     const formData = getFormData();
-    if (formData.code && formData.type && formData.lunghezza_ordine) {
+    if (formData.code && formData.type) {
         // Valida completamente i dati prima di aggiungere
         if (validateFormData(formData)) {
             formData.temp_id = Date.now();
@@ -920,6 +1367,30 @@ function addAndOptimize() {
         return;
     }
     
+    // Verifica se ci sono colori bloccati
+    const hasLockedColors = colorsList.some(c => c.locked);
+    
+    console.log('=== DEBUG ADDANDOPTIMIZE ===');
+    console.log('Has locked colors:', hasLockedColors);
+    console.log('API with locks available:', window.optimizeWithLocksAvailable);
+    console.log('===========================');
+    
+    if (hasLockedColors && window.optimizeWithLocksAvailable) {
+        // Se ci sono colori bloccati E l'API è disponibile, usa l'ottimizzazione con blocchi
+        addAndOptimizeWithLocks();
+    } else if (hasLockedColors && !window.optimizeWithLocksAvailable) {
+        // Se ci sono blocchi ma l'API non è disponibile, avvisa l'utente
+        if (confirm('⚠️ Hai colori bloccati ma la funzionalità completa non è disponibile. I blocchi verranno ignorati. Continuare?')) {
+            addAndOptimizeStandard();
+        }
+    } else {
+        // Se non ci sono blocchi, usa l'ottimizzazione standard
+        addAndOptimizeStandard();
+    }
+}
+
+// Ottimizzazione standard (senza blocchi)
+function addAndOptimizeStandard() {
     // Trova il colore attualmente in esecuzione per determinare il cluster di partenza
     const executingColor = colorsList.find(c => c.in_execution);
     const startCluster = executingColor ? executingColor.cluster : null;
@@ -928,6 +1399,7 @@ function addAndOptimize() {
     const existingColors = colorsList.filter(c => !c.completed).map(c => ({
         code: c.color_code || c.code,
         type: c.color_type || c.type,
+        line: c.line,
         sequence: c.input_sequence || c.sequence,
         lunghezza_ordine: c.lunghezza_ordine,
         CH: c.ch_value || c.CH,
@@ -937,6 +1409,7 @@ function addAndOptimize() {
     const tempColors = temporaryList.map(tc => ({
         code: tc.code,
         type: tc.type,
+        line: tc.line,
         sequence: tc.sequence,
         lunghezza_ordine: tc.lunghezza_ordine,
         CH: tc.CH,
@@ -968,30 +1441,233 @@ function addAndOptimize() {
     };
     
     // Mostra indicatore di caricamento
-    const btn = $('button:contains("Aggiungi e Ricalcola")');
+    const btn = $('button:contains("Aggiorna e Ricalcola")');
     const originalText = btn.html();
     btn.html('<i class="fas fa-spinner fa-spin me-2"></i>Ricalcolando...').prop('disabled', true);
     
-    // Chiama l'API di ottimizzazione
+    // Chiama l'API di ottimizzazione standard
     $.ajax({
         url: '/api/optimize',
         method: 'POST',
         contentType: 'application/json',
         data: JSON.stringify(requestData),
         success: function(response) {
-            alert('Ottimizzazione completata con successo!');
+            showCabinMessage('✅ Ottimizzazione completata con successo!', 'success');
             clearTemporaryList();
             clearForm();
-            loadColorsList(); // Questo ora include automaticamente la sincronizzazione dei cluster
+            loadColorsList();
         },
         error: function(xhr, status, error) {
             let errorMessage = 'Errore durante il ricalcolo';
             if (xhr.responseJSON && xhr.responseJSON.detail) {
                 errorMessage = xhr.responseJSON.detail;
             }
-            alert(errorMessage);
+            showCabinMessage(errorMessage, 'error');
         },
         complete: function() {
+            btn.html(originalText).prop('disabled', false);
+        }
+    });
+}
+
+// Ottimizzazione con rispetto dei blocchi
+function addAndOptimizeWithLocks() {
+    const lockedCount = colorsList.filter(c => c.locked).length;
+    
+    // Mostra un messaggio informativo all'utente
+    if (!confirm(`Aggiungerai ${temporaryList.length} nuovi colori rispettando ${lockedCount} colori bloccati. Continuare?`)) {
+        return;
+    }
+    
+    // Se non ci sono effettivamente colori bloccati, usa l'ottimizzazione standard
+    if (lockedCount === 0) {
+        console.log('Nessun colore bloccato rilevato, uso ottimizzazione standard');
+        addAndOptimizeStandard();
+        return;
+    }
+    
+    // Prepara i dati esistenti con informazioni sui blocchi
+    const existingColorsWithLocks = colorsList.filter(c => !c.completed).map((c, index) => ({
+        code: c.color_code || c.code,
+        type: c.color_type || c.type,
+        line: c.line,
+        sequence: c.input_sequence || c.sequence,
+        lunghezza_ordine: c.lunghezza_ordine,
+        CH: c.ch_value || c.CH,
+        sequence_type: c.sequence_type,
+        cluster: c.cluster, // Aggiungiamo il cluster (importante per i blocchi!)
+        locked: c.locked || false,
+        position: c.locked ? index : null // Se bloccato, mantieni la posizione attuale
+    }));
+    
+    // Prepara i nuovi colori (non bloccati) - devono essere ottimizzati per avere cluster
+    const newColors = temporaryList.map(tc => ({
+        code: tc.code,
+        type: tc.type,
+        line: tc.line,
+        sequence: tc.sequence,
+        lunghezza_ordine: tc.lunghezza_ordine,
+        CH: tc.CH,
+        sequence_type: tc.sequence_type,
+        cluster: null, // I nuovi colori non hanno ancora un cluster assegnato
+        locked: false
+    }));
+    
+    const allColors = [...existingColorsWithLocks, ...newColors];
+    
+    // Valida tutti i colori
+    for (let i = 0; i < allColors.length; i++) {
+        const color = allColors[i];
+        if (!color.code || !color.code.trim()) {
+            alert(`Errore: Colore ${i + 1} ha un codice mancante o vuoto.`);
+            return;
+        }
+        if (!color.type || !color.type.trim()) {
+            alert(`Errore: Colore ${i + 1} (${color.code}) ha un tipo mancante o vuoto.`);
+            return;
+        }
+    }
+    
+    const requestData = {
+        colors_today: allColors, // Cambiato da 'colors' a 'colors_today'
+        prioritized_reintegrations: [] // Aggiunto campo richiesto dal backend
+    };
+    
+    console.log('=== DEBUG OTTIMIZZAZIONE CON BLOCCHI ===');
+    console.log('Existing colors with locks:', existingColorsWithLocks);
+    console.log('New colors:', newColors);
+    console.log('All colors:', allColors);
+    console.log('Request data:', requestData);
+    console.log('API URL:', `/api/cabin/${cabinId}/optimize-locked`);
+    console.log('Locked count:', lockedCount);
+    console.log('=====================================');
+    
+    // Mostra indicatore di caricamento
+    const btn = $('button:contains("Aggiorna e Ricalcola")');
+    const originalText = btn.html();
+    btn.html('<i class="fas fa-lock fa-spin me-2"></i>Ottimizzando con blocchi...').prop('disabled', true);
+    
+    // Prima prova con l'API specifica per i blocchi
+    $.ajax({
+        url: `/api/cabin/${cabinId}/optimize-locked`,
+        method: 'POST',
+        contentType: 'application/json',
+        data: JSON.stringify(requestData),
+        timeout: 30000,
+        success: function(response) {
+            console.log('✅ Ottimizzazione con blocchi completata:', response);
+            const addedCount = temporaryList.length;
+            showCabinMessage(`✅ Aggiunti ${addedCount} colori rispettando i blocchi esistenti!`, 'success');
+            clearTemporaryList();
+            clearForm();
+            loadColorsList();
+        },
+        error: function(xhr, status, error) {
+            console.error('Errore ottimizzazione con blocchi:', xhr);
+            console.error('Status:', status);
+            console.error('Error:', error);
+            console.error('Response Text:', xhr.responseText);
+            console.error('Status Code:', xhr.status);
+            
+            // Se l'endpoint non esiste (404) o c'è un errore del server, prova fallback
+            if (xhr.status === 404 || xhr.status === 500) {
+                console.log('Endpoint con blocchi non disponibile, tentativo fallback con API standard...');
+                showCabinMessage('⚠️ Funzione blocchi non disponibile, uso ottimizzazione standard...', 'warning');
+                
+                // Fallback: usa l'ottimizzazione standard ignorando i blocchi
+                btn.html('<i class="fas fa-spinner fa-spin me-2"></i>Fallback ottimizzazione...').prop('disabled', true);
+                
+                setTimeout(() => {
+                    addAndOptimizeStandardFallback(allColors);
+                }, 1000);
+                
+                return;
+            }
+            
+            let errorMessage = 'Errore durante l\'ottimizzazione con blocchi';
+            
+            // Gestione più dettagliata degli errori
+            if (xhr.status === 400) {
+                errorMessage = 'Dati non validi inviati al server.';
+            } else if (xhr.responseJSON) {
+                if (xhr.responseJSON.error) {
+                    errorMessage = xhr.responseJSON.error;
+                } else if (xhr.responseJSON.detail) {
+                    errorMessage = xhr.responseJSON.detail;
+                }
+            } else if (xhr.responseText) {
+                try {
+                    const response = JSON.parse(xhr.responseText);
+                    if (response.error) {
+                        errorMessage = response.error;
+                    } else if (response.detail) {
+                        errorMessage = response.detail;
+                    }
+                } catch (e) {
+                    console.error('Impossibile parsare response text:', xhr.responseText);
+                }
+            }
+            
+            showCabinMessage(`${errorMessage} (Status: ${xhr.status})`, 'error');
+        },
+        complete: function() {
+            btn.html(originalText).prop('disabled', false);
+        }
+    });
+}
+
+// Fallback per ottimizzazione standard quando l'API con blocchi non è disponibile
+function addAndOptimizeStandardFallback(allColors) {
+    console.log('=== FALLBACK OTTIMIZZAZIONE STANDARD ===');
+    console.log('All colors per fallback:', allColors);
+    
+    // Trova il colore attualmente in esecuzione per determinare il cluster di partenza
+    const executingColor = colorsList.find(c => c.in_execution);
+    const startCluster = executingColor ? executingColor.cluster : null;
+    
+    // Converti i colori al formato richiesto dall'API standard
+    const standardColors = allColors.map(c => ({
+        code: c.code,
+        type: c.type,
+        line: c.line,
+        sequence: c.sequence,
+        lunghezza_ordine: c.lunghezza_ordine,
+        CH: c.CH,
+        sequence_type: c.sequence_type
+    }));
+    
+    const requestData = {
+        colors_today: standardColors,
+        start_cluster_name: startCluster
+    };
+    
+    console.log('Request data fallback:', requestData);
+    
+    // Chiama l'API di ottimizzazione standard
+    $.ajax({
+        url: '/api/optimize',
+        method: 'POST',
+        contentType: 'application/json',
+        data: JSON.stringify(requestData),
+        timeout: 30000,
+        success: function(response) {
+            const addedCount = temporaryList.length;
+            showCabinMessage(`✅ Aggiunti ${addedCount} colori (ottimizzazione standard - blocchi ignorati)`, 'warning');
+            clearTemporaryList();
+            clearForm();
+            loadColorsList();
+        },
+        error: function(xhr, status, error) {
+            console.error('Errore anche nel fallback:', xhr);
+            let errorMessage = 'Errore durante il fallback di ottimizzazione';
+            if (xhr.responseJSON && xhr.responseJSON.detail) {
+                errorMessage = xhr.responseJSON.detail;
+            }
+            showCabinMessage(`❌ ${errorMessage}`, 'error');
+        },
+        complete: function() {
+            const btn = $('button:contains("Aggiorna e Ricalcola")');
+            const originalText = '<i class="fas fa-cogs me-2"></i>Aggiorna e Ricalcola';
             btn.html(originalText).prop('disabled', false);
         }
     });
@@ -1586,46 +2262,34 @@ function toggleColorLock(colorIndex) {
     
     console.log(`Toggle lock color ${color.color_code}: ${newLockState}`);
     
-    $.ajax({
-        url: `/api/cabin/${cabinId}/colors/${colorIndex}/lock`,
-        method: 'PUT',
-        contentType: 'application/json',
-        data: JSON.stringify({ locked: newLockState }),
-        success: function(response) {
-            // Aggiorna stato locale
-            color.locked = newLockState;
-            
-            // Aggiorna visivamente
-            const row = $(`.color-row[data-color-index="${colorIndex}"]`);
-            const lockBtn = row.find('.lock-toggle');
-            const lockIcon = lockBtn.find('i');
-            
-            if (newLockState) {
-                row.addClass('locked');
-                lockBtn.removeClass('unlocked').addClass('locked');
-                lockIcon.removeClass('fa-unlock').addClass('fa-lock');
-                lockBtn.attr('title', 'Sblocca colore');
-            } else {
-                row.removeClass('locked');
-                lockBtn.removeClass('locked').addClass('unlocked');
-                lockIcon.removeClass('fa-lock').addClass('fa-unlock');
-                lockBtn.attr('title', 'Blocca colore');
-            }
-            
-            const action = newLockState ? 'bloccato' : 'sbloccato';
-            showNotification(`Colore ${color.color_code} ${action}`, 'info');
-            
-            updateLockStats();
-        },
-        error: function(xhr) {
-            console.error('Errore durante toggle lock colore');
-            let errorMsg = 'Errore durante il blocco/sblocco';
-            if (xhr.responseJSON && xhr.responseJSON.error) {
-                errorMsg = xhr.responseJSON.error;
-            }
-            showNotification(errorMsg, 'error');
-        }
-    });
+    // Per ora, aggiorna solo lo stato locale (senza chiamare il backend)
+    // TODO: Implementare endpoint nel backend per salvare lo stato del lock
+    
+    // Aggiorna stato locale
+    color.locked = newLockState;
+    
+    // Aggiorna visivamente
+    const row = $(`.color-row[data-color-index="${colorIndex}"]`);
+    const lockBtn = row.find('.lock-toggle');
+    const lockIcon = lockBtn.find('i');
+    
+    if (newLockState) {
+        row.addClass('locked');
+        lockBtn.removeClass('unlocked').addClass('locked');
+        lockIcon.removeClass('fa-unlock').addClass('fa-lock');
+        lockBtn.attr('title', 'Sblocca colore');
+    } else {
+        row.removeClass('locked');
+        lockBtn.removeClass('locked').addClass('unlocked');
+        lockIcon.removeClass('fa-lock').addClass('fa-unlock');
+        lockBtn.attr('title', 'Blocca colore');
+    }
+    
+    const action = newLockState ? 'bloccato' : 'sbloccato';
+    showNotification(`Colore ${color.color_code} ${action} (temporaneo)`, 'info');
+    
+    updateLockStats();
+    updateOptimizeButtonState(); // Aggiorna lo stato del pulsante di ottimizzazione
 }
 
 // Funzione per bloccare/sbloccare un cluster

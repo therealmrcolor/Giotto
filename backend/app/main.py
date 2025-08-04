@@ -86,7 +86,7 @@ async def optimize_sequence(request: Request, request_data: OptimizationRequest 
     # Log dettagliato dei colori ricevuti
     print("COLORI RICEVUTI:")
     for i, color in enumerate(request_data.colors_today):
-        print(f"  Colore {i}: code={color.code}, type={color.type}, sequence={color.sequence}")
+        print(f"  Colore {i}: code={color.code}, type={color.type}, line={color.line}, sequence={color.sequence}")
         # Validate required fields
         if not color.code:
             raise HTTPException(status_code=422, detail=f"Color {i}: 'code' field is required and cannot be empty")

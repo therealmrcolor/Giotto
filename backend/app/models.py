@@ -13,6 +13,7 @@ TransitionRuleDict = Dict[Tuple[str, str], Dict[str, Any]]
 class ColorInput(BaseModel):
     code: str
     type: str
+    line: Optional[str] = None # Linea di produzione (opzionale)
     sequence: Optional[int] = None # O qualsiasi altro campo presente in colori.txt
     sequence_type: Optional[str] = None # "piccola" o "successiva" - per gestire le sequenze
     CH: Optional[float] = None # Centiore - da implementare in futuro
@@ -31,6 +32,7 @@ class OptimizationRequest(BaseModel):
 class OptimizedColorOutput(BaseModel):
     code: str
     type: str
+    line: Optional[str] = None # Linea di produzione (mantenuto se presente in input)
     cluster: Optional[str] # Aggiunto dal backend
     sequence: Optional[int] = None # Mantenuto se presente in input
     sequence_type: Optional[str] = None # Mantenuto se presente in input

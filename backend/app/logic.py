@@ -859,6 +859,7 @@ def optimize_color_sequence(colori_giorno_input: List[Dict[str, Any]],
     # LOG: Dettaglio input
     print(f"[LOGIC INPUT] Ricevuti {len(colori_giorno_input)} colori:")
     for i, color in enumerate(colori_giorno_input):
+        print(f"  [INPUT] {i}: code={color.get('code')}, type={color.get('type')}, line={color.get('line')}")
         if color.get('code') == 'RAL5019':
             print(f"  [INPUT] {i}: {color}")
     print(f"  Tutti i codici input: {[c.get('code') + ' ' + str(c.get('type')) for c in colori_giorno_input]}")

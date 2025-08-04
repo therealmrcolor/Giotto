@@ -274,9 +274,10 @@
                     <table class="table table-bordered bulk-input-table">
                         <thead>
                             <tr>
-                                <th style="width: 35%;">Colore</th>
-                                <th style="width: 30%;">Tipologia</th>
-                                <th style="width: 20%;">Sequenza</th>
+                                <th style="width: 30%;">Colore</th>
+                                <th style="width: 25%;">Tipologia</th>
+                                <th style="width: 15%;">Linea</th>
+                                <th style="width: 15%;">Sequenza</th>
                                 <th style="width: 15%;">Azioni</th>
                             </tr>
                         </thead>
@@ -337,9 +338,10 @@
                     <table class="table table-bordered bulk-input-table">
                         <thead>
                             <tr>
-                                <th style="width: 35%;">Colore</th>
-                                <th style="width: 30%;">Tipologia</th>
-                                <th style="width: 20%;">Sequenza</th>
+                                <th style="width: 30%;">Colore</th>
+                                <th style="width: 25%;">Tipologia</th>
+                                <th style="width: 15%;">Linea</th>
+                                <th style="width: 15%;">Sequenza</th>
                                 <th style="width: 15%;">Azioni</th>
                             </tr>
                         </thead>
@@ -348,42 +350,6 @@
                         </tbody>
                     </table>
                 </div>
-            </div>
-        </div>
-
-        <!-- Pulsante Ottimizzazione Globale -->
-        <div class="card mb-4">
-            <div class="card-body text-center">
-                <div class="alert alert-info mb-3">
-                    <small>
-                        <i class="fas fa-lightbulb me-2"></i>
-                        <strong>Tip:</strong> Puoi incollare dati in qualsiasi cella "Colore" delle tabelle in due formati:
-                        <br><strong>Formato semplice (solo codici):</strong>
-                        <br><code>RAL9005<br>RAL9001<br>RAL8005</code>
-                        <br><strong>Formato CSV completo (Codice,Tipologia,Sequenza):</strong>
-                        <br><code>RAL8005,R,1<br>RAL9001,E,1<br>RAL9004,E,2</code>
-                        <br>Il sistema riconoscerà automaticamente il formato e compilerà tutti i campi!
-                    </small>
-                    <div class="row mt-2">
-                        <div class="col-md-6">
-                            <button type="button" class="btn btn-outline-primary btn-sm w-100" onclick="insertTestCodes()">
-                                <i class="fas fa-flask me-2"></i>Test: Codici Semplici
-                            </button>
-                        </div>
-                        <div class="col-md-6">
-                            <button type="button" class="btn btn-outline-success btn-sm w-100" onclick="insertTestCSV()">
-                                <i class="fas fa-table me-2"></i>Test: Formato CSV
-                            </button>
-                        </div>
-                    </div>
-                </div>
-                
-                <button type="button" class="btn btn-warning btn-lg" onclick="processBothCabins()">
-                    <i class="fas fa-cogs me-2"></i>
-                    <span class="btn-text-bulk">Ottimizza Entrambe le Cabine</span>
-                    <span class="spinner-border spinner-border-sm d-none" role="status"></span>
-                </button>
-                <div class="form-text mt-2">Elabora i colori inseriti in entrambe le cabine</div>
             </div>
         </div>
 
@@ -508,6 +474,18 @@
     
     <!-- Stato Cabine -->
     <div class="col-lg-4">
+        <!-- Pulsante Ottimizzazione Globale -->
+        <div class="card mb-4">
+            <div class="card-body text-center">
+                <button type="button" class="btn btn-warning btn-lg" onclick="processBothCabins()">
+                    <i class="fas fa-cogs me-2"></i>
+                    <span class="btn-text-bulk">Ottimizza Entrambe le Cabine</span>
+                    <span class="spinner-border spinner-border-sm d-none" role="status"></span>
+                </button>
+                <div class="form-text mt-2">Elabora i colori inseriti in entrambe le cabine</div>
+            </div>
+        </div>
+        
         <div class="card">
             <div class="card-header bg-info text-white">
                 <h5 class="card-title mb-0">
@@ -1262,6 +1240,9 @@ function addBulkRow(cabinId = 'cabin1', colorCode = '') {
                 </select>
             </td>
             <td>
+                <input type="text" class="form-control" id="${prefix}Line${counter}" placeholder="es. Linea A">
+            </td>
+            <td>
                 <input type="number" class="form-control" id="${prefix}Sequence${counter}" placeholder="1">
             </td>
             <td>
@@ -1305,6 +1286,9 @@ function addBulkRowAfter(cabinId, afterRowId, colorCode = '') {
                     <option value="K">K - Kit</option>
                     <option value="E">E - Estetico</option>
                 </select>
+            </td>
+            <td>
+                <input type="text" class="form-control" id="${prefix}Line${counter}" placeholder="es. Linea A">
             </td>
             <td>
                 <input type="number" class="form-control" id="${prefix}Sequence${counter}" placeholder="1">
@@ -1799,7 +1783,7 @@ function processBothCabins() {
         
         console.log('DEBUG: Inviando richiesta per Cabina 1:', requestData1);
         
-        const optimizeUrl1 = BACKEND_URL + '/optimize';
+        const optimizeUrl1 = '/api/optimize';
         console.log('DEBUG: Cabin1 AJAX URL:', optimizeUrl1);
         $.ajax({
             url: optimizeUrl1,
@@ -1832,7 +1816,7 @@ function processBothCabins() {
         
         console.log('DEBUG: Inviando richiesta per Cabina 2:', requestData2);
         
-        const optimizeUrl2 = BACKEND_URL + '/optimize';
+        const optimizeUrl2 = '/api/optimize';
         console.log('DEBUG: Cabin2 AJAX URL:', optimizeUrl2);
         $.ajax({
             url: optimizeUrl2,
@@ -1871,6 +1855,7 @@ function getCabinColors(cabinId) {
         const rowNumber = rowId.replace(`${prefix}Row`, '');
         const colorCode = $(`#${prefix}Color${rowNumber}`).val().trim();
         const colorType = $(`#${prefix}Type${rowNumber}`).val();
+        const colorLine = $(`#${prefix}Line${rowNumber}`).val().trim();
         const colorSequence = $(`#${prefix}Sequence${rowNumber}`).val();
         
         // Aggiungi solo righe con almeno codice e tipo compilati
@@ -1878,6 +1863,7 @@ function getCabinColors(cabinId) {
             colors.push({
                 code: colorCode,
                 type: colorType,
+                line: colorLine || null,
                 lunghezza_ordine: lunghezza,
                 sequence: parseInt(colorSequence) || null,
                 CH: null
