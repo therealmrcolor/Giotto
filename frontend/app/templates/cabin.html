@@ -116,10 +116,43 @@
     bottom: 20px;
     z-index: 1000;
     background: white;
-    padding: 10px;
-    border-radius: 8px;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    padding: 20px;
+    border-radius: 12px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.15);
     border: 1px solid #dee2e6;
+}
+
+/* Stili migliorati per il tasto principale ottimizzazione */
+#optimizeWithLocksBtn {
+    font-weight: 600;
+    border-radius: 8px;
+    box-shadow: 0 3px 12px rgba(255, 193, 7, 0.3);
+    transition: all 0.3s ease;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+#optimizeWithLocksBtn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 20px rgba(255, 193, 7, 0.4);
+    background-color: #e0a800;
+    border-color: #d39e00;
+}
+
+#optimizeWithLocksBtn:active {
+    transform: translateY(0px);
+    box-shadow: 0 2px 8px rgba(255, 193, 7, 0.3);
+}
+
+/* Effetto pulsazione per attirare attenzione quando necessario */
+.optimization-buttons.highlight-attention {
+    animation: attentionPulse 2s infinite;
+}
+
+@keyframes attentionPulse {
+    0% { box-shadow: 0 4px 20px rgba(0,0,0,0.15); }
+    50% { box-shadow: 0 4px 25px rgba(255, 193, 7, 0.3); }
+    100% { box-shadow: 0 4px 20px rgba(0,0,0,0.15); }
 }
 
 /* Stili per interfaccia cluster */
@@ -468,89 +501,37 @@
     </div>
 </div>
 
-<!-- Pannello Ordinamento Cluster -->
-<div class="row mt-4">
-    <div class="col-12">
-        <div class="card">
-            <div class="card-header">
-                <div class="d-flex justify-content-between align-items-center">
-                    <div>
-                        <h6 class="mb-1">
-                            <i class="fas fa-layer-group me-2"></i>
-                            Ordinamento Cluster
-                        </h6>
-                        <small class="text-muted">Imposta l'ordine preferito dei cluster per l'ottimizzazione</small>
-                    </div>
-                    <div>
-                        <button class="btn btn-sm btn-outline-primary" onclick="optimizeClusterSequence()" id="optimizeClusterBtn">
-                            <i class="fas fa-sort me-2"></i>
-                            <span class="btn-text">Applica Ordine</span>
-                            <span class="spinner-border spinner-border-sm ms-2 d-none" role="status"></span>
-                        </button>
-                        <button class="btn btn-sm btn-outline-secondary" onclick="resetClusterOrder()">
-                            <i class="fas fa-undo me-2"></i>
-                            Reset
-                        </button>
-                    </div>
-                </div>
-            </div>
-            <div class="card-body">
-                <div class="row">
-                    <div class="col-md-6">
-                        <h6>Ordine Cluster</h6>
-                        <div id="emptyClusterState" class="text-center py-3 text-muted d-none">
-                            <i class="fas fa-layer-group fa-2x mb-2"></i>
-                            <p>Nessun cluster disponibile</p>
-                        </div>
-                        <ul id="clusterOrderList" class="list-group sortable-clusters">
-                            <!-- I cluster verranno popolati dinamicamente -->
-                        </ul>
-                    </div>
-                    <div class="col-md-6">
-                        <h6>Informazioni</h6>
-                        <div class="alert alert-info">
-                            <small>
-                                <strong>Come usare:</strong><br>
-                                1. Trascina i cluster per riordinarli<br>
-                                2. Usa i lucchetti per bloccare le posizioni<br>
-                                3. Clicca "Applica Ordine" per riorganizzare i colori<br>
-                                4. Usa le funzioni di blocco singoli colori per ottimizzazioni fini
-                            </small>
-                        </div>
-                        <div id="clusterStats" class="mt-3">
-                            <small class="text-muted">Statistiche cluster verranno mostrate qui</small>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-
 <!-- Pannello Ottimizzazione con Blocchi -->
 <div class="row mt-4">
     <div class="col-12">
         <div class="optimization-buttons">
-            <div class="d-flex justify-content-between align-items-center">
-                <div>
-                    <h6 class="mb-1">
+            <div class="text-center mb-4">
+                <div class="mb-3">
+                    <h5 class="mb-2">
                         <i class="fas fa-cogs me-2"></i>
                         Ottimizzazione Avanzata
-                    </h6>
-                    <small class="text-muted">Riordina colori rispettando i blocchi impostati</small>
+                    </h5>
+                    <p class="text-muted mb-3">Riordina colori rispettando i blocchi impostati</p>
                 </div>
-                <div>
-                    <button class="btn btn-warning me-2" onclick="optimizeWithLocks()" id="optimizeWithLocksBtn">
-                        <i class="fas fa-lock me-2"></i>
-                        <span class="btn-text">Ottimizza con Blocchi</span>
-                        <span class="spinner-border spinner-border-sm ms-2 d-none" role="status"></span>
+                
+                <!-- Tasto principale ottimizzazione -->
+                <div class="mb-3">
+                    <button class="btn btn-warning btn-lg px-5 py-3 me-3" onclick="optimizeWithLocks()" id="optimizeWithLocksBtn">
+                        <i class="fas fa-lock me-3 fa-lg"></i>
+                        <span class="btn-text fs-5">Ottimizza con Blocchi</span>
+                        <span class="spinner-border spinner-border-sm ms-3 d-none" role="status"></span>
                     </button>
+                </div>
+                
+                <!-- Tasti secondari -->
+                <div>
                     <button class="btn btn-outline-secondary me-2" onclick="clearAllLocks()">
                         <i class="fas fa-unlock me-2"></i>
                         Sblocca Tutto
                     </button>
                     <button class="btn btn-outline-info" onclick="showLockInfo()">
-                        <i class="fas fa-info-circle"></i>
+                        <i class="fas fa-info-circle me-2"></i>
+                        Info Blocchi
                     </button>
                 </div>
             </div>
@@ -573,12 +554,10 @@
 const cabinId = {{ cabin_id }};
 let colorsList = [];
 let temporaryList = [];
-let clusterOrder = [];
 
 // Carica dati al caricamento della pagina
 $(document).ready(function() {
     loadColorsList();
-    loadClusterOrder();
     
     // Aggiungi gestione paste CSV al campo colorCode
     setupCabinPasteHandler();
@@ -948,171 +927,9 @@ function loadColorsList() {
             colorsList = data.colors || [];
             updateColorsTable();
             updateStatistics();
-            
-            // Sincronizza automaticamente l'ordine dei cluster dopo l'aggiornamento
-            syncClusterOrderWithColors();
         })
         .fail(function() {
             console.error('Errore durante il caricamento della lista colori');
-        });
-}
-
-// Carica ordine cluster
-function loadClusterOrder() {
-    $.get(`/api/cabin/${cabinId}/cluster_order`)
-        .done(function(data) {
-            clusterOrder = data.order || [];
-            updateClusterOrderDisplay();
-            
-            // Inizializza drag and drop dopo aver caricato i cluster
-            setTimeout(() => {
-                initSortable();
-            }, 100);
-        })
-        .fail(function() {
-            console.error('Errore durante il caricamento dell\'ordine dei cluster');
-            // Se non c'è un ordine salvato, usa i cluster dai colori esistenti
-            syncClusterOrderWithColors();
-        });
-}
-
-// Sincronizza l'ordine dei cluster con i colori presenti
-function syncClusterOrderWithColors() {
-    console.log('=== INIZIO SINCRONIZZAZIONE CLUSTER ===');
-    console.log('colorsList attuale:', colorsList);
-    console.log('clusterOrder prima della sincronizzazione:', clusterOrder);
-    
-    // Ottieni cluster unici dai colori attuali
-    const clustersFromColors = [...new Set(colorsList.map(c => c.cluster).filter(c => c))];
-    console.log('Cluster trovati dai colori:', clustersFromColors);
-    
-    // Se non ci sono colori, svuota l'ordine cluster
-    if (clustersFromColors.length === 0) {
-        console.log('Nessun cluster nei colori, svuotando ordine cluster');
-        clusterOrder = [];
-        updateClusterOrderDisplay();
-        showSyncMessage('⚠️ Nessun cluster trovato nei colori', 'warning');
-        updateSyncTimestamp();
-        return;
-    }
-    
-    // Mantieni l'ordine esistente SOLO per i cluster che sono ancora presenti nei colori
-    const existingValidClusters = clusterOrder.filter(c => clustersFromColors.includes(c));
-    console.log('Cluster esistenti ancora validi:', existingValidClusters);
-    
-    // Aggiungi nuovi cluster che non erano nell'ordine precedente
-    const newClusters = clustersFromColors.filter(c => !clusterOrder.includes(c));
-    console.log('Nuovi cluster da aggiungere:', newClusters);
-    
-    // Combina ordine esistente + nuovi cluster ordinati alfabeticamente
-    const oldOrder = [...clusterOrder];
-    clusterOrder = [...existingValidClusters, ...newClusters.sort()];
-    
-    console.log('Ordine cluster PRIMA:', oldOrder);
-    console.log('Ordine cluster DOPO:', clusterOrder);
-    
-    // Mostra feedback visivo appropriato
-    if (newClusters.length > 0) {
-        showSyncMessage(`✅ Aggiunti ${newClusters.length} nuovi cluster: ${newClusters.join(', ')}`, 'success');
-    } else if (oldOrder.length !== clusterOrder.length) {
-        showSyncMessage('🔄 Ordine cluster aggiornato (rimossi cluster non più utilizzati)', 'info');
-    } else {
-        showSyncMessage('✅ Tutti i cluster sono già sincronizzati', 'info');
-    }
-    
-    updateSyncTimestamp();
-    console.log('=== FINE SINCRONIZZAZIONE CLUSTER ===');
-    
-    updateClusterOrderDisplay();
-    
-    // Inizializza drag and drop
-    setTimeout(() => {
-        initSortable();
-    }, 100);
-}
-
-// Funzioni per feedback visivo sincronizzazione cluster
-function showSyncMessage(message, type = 'info') {
-    const messageElement = document.getElementById('syncMessage');
-    
-    if (!messageElement) {
-        console.warn('Elemento syncMessage non trovato');
-        return;
-    }
-    
-    // Mappa i tipi a classi Bootstrap
-    const typeClasses = {
-        'success': 'alert-success',
-        'info': 'alert-info',
-        'warning': 'alert-warning',
-        'error': 'alert-danger'
-    };
-    
-    // Rimuovi classi precedenti e aggiungi quella nuova
-    messageElement.className = `alert alert-sm mb-2 ${typeClasses[type] || 'alert-info'}`;
-    messageElement.textContent = message;
-    
-    // Mostra il messaggio
-    messageElement.style.display = 'block';
-    
-    // Nascondi il messaggio dopo 5 secondi
-    setTimeout(() => {
-        messageElement.style.display = 'none';
-    }, 5000);
-}
-
-function updateSyncTimestamp() {
-    try {
-        const now = new Date();
-        const timeString = now.toLocaleTimeString('it-IT', { 
-            hour: '2-digit', 
-            minute: '2-digit', 
-            second: '2-digit' 
-        });
-        const timestampElement = document.getElementById('lastSyncTime');
-        if (timestampElement) {
-            timestampElement.textContent = timeString;
-        }
-        // Aggiorna anche altri elementi di timestamp se esistono
-        const syncMessageElement = document.getElementById('syncMessage');
-        if (syncMessageElement) {
-            const currentText = syncMessageElement.textContent;
-            if (currentText && !currentText.includes('aggiornato alle')) {
-                syncMessageElement.textContent = `${currentText} (aggiornato alle ${timeString})`;
-            }
-        }
-    } catch (error) {
-        console.warn('Errore durante aggiornamento timestamp:', error);
-    }
-}
-
-// Forza il refresh dell'ordine cluster
-function refreshClusterOrder() {
-    console.log('=== REFRESH MANUALE CLUSTER ===');
-    console.log('Forzando aggiornamento ordine cluster...');
-    
-    showSyncMessage('🔄 Ricaricamento cluster in corso...', 'info');
-    
-    // Prima ricarica i colori per essere sicuri di avere i dati più aggiornati
-    $.get(`/api/cabin/${cabinId}/colors`)
-        .done(function(data) {
-            console.log('Dati colori ricaricati:', data);
-            colorsList = data.colors || [];
-            
-            // Poi sincronizza i cluster
-            syncClusterOrderWithColors();
-            
-            // Mostra messaggio di conferma sul pulsante
-            const btn = $('#refreshClusterBtn');
-            const originalText = btn.html();
-            btn.html('<i class="fas fa-check text-success me-2"></i>Aggiornato!');
-            setTimeout(() => {
-                btn.html(originalText);
-            }, 1500);
-        })
-        .fail(function() {
-            console.error('Errore durante il refresh dei cluster');
-            showSyncMessage('❌ Errore durante l\'aggiornamento dei cluster', 'error');
         });
 }
 
