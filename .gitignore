@@ -8,22 +8,20 @@ backend/.coverage
 ._*
 .Spotlight-V100
 .Trashes
+.fseventsd
+.VolumeIcon.icns
+.com.apple.timemachine.donotpresent
 
-# File Icon? di macOS (causano problemi con Git)
-Icon?
+# File Icon di macOS (causano problemi con Git)
 Icon
-**/Icon?
-**/Icon
-**/.DS_Store
-ehthumbs.db
-Thumbs.db
 Icon?
-Icon
-**/Icon?
 **/Icon
+**/Icon?
 **/.DS_Store
 **/.DS_Store?
 **/._*
+**/Thumbs.db
+**/ehthumbs.db
 
 # Temporary files
 .vscode/settings.json
