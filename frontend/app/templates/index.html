@@ -260,9 +260,6 @@
                             <button type="button" class="btn btn-outline-primary me-2" onclick="addBulkRow('cabin1')">
                                 <i class="fas fa-plus me-2"></i>Aggiungi Riga
                             </button>
-                            <button type="button" class="btn btn-outline-info me-2" onclick="fillDefaultTypes('cabin1')">
-                                <i class="fas fa-magic me-2"></i>Auto-Tipo
-                            </button>
                             <button type="button" class="btn btn-outline-secondary" onclick="clearBulkTable('cabin1')">
                                 <i class="fas fa-broom me-2"></i>Pulisci Tabella
                             </button>
@@ -323,9 +320,6 @@
                         <div>
                             <button type="button" class="btn btn-outline-primary me-2" onclick="addBulkRow('cabin2')">
                                 <i class="fas fa-plus me-2"></i>Aggiungi Riga
-                            </button>
-                            <button type="button" class="btn btn-outline-info me-2" onclick="fillDefaultTypes('cabin2')">
-                                <i class="fas fa-magic me-2"></i>Auto-Tipo
                             </button>
                             <button type="button" class="btn btn-outline-secondary" onclick="clearBulkTable('cabin2')">
                                 <i class="fas fa-broom me-2"></i>Pulisci Tabella
@@ -1584,113 +1578,6 @@ function addBulkRowWithValidation(colorCode = '') {
 // Gestione cambio lunghezza per input veloce (funzione legacy mantenuta per compatibilità)
 function handleLengthChange() {
     console.log('handleLengthChange: funzione legacy non più utilizzata con i moduli separati');
-}
-
-// Auto-compila i tipi basandosi sui codici colore
-function fillDefaultTypes() {
-    const tbody = $('#bulkInputBody');
-    let filledCount = 0;
-    
-    tbody.find('tr').each(function() {
-        const rowId = $(this).attr('id');
-        if (!rowId) return;
-        
-        const rowNumber = rowId.replace('bulkRow', '');
-        const colorInput = $(`#bulkColor${rowNumber}`);
-        const typeSelect = $(`#bulkType${rowNumber}`);
-        
-        const colorCode = colorInput.val().trim().toUpperCase();
-        
-        // Solo se il codice è presente e il tipo non è già selezionato
-        if (colorCode && !typeSelect.val()) {
-            let suggestedType = 'E'; // Default: Estetico
-            
-            // Logica per determinare il tipo basandosi sul codice
-            if (colorCode.startsWith('RAL')) {
-                // Codici RAL: principalmente estetici, ma alcuni potrebbero essere fissi
-                const ralNumber = parseInt(colorCode.replace('RAL', ''));
-                if (ralNumber <= 1000) {
-                    suggestedType = 'F'; // Colori base spesso fissi
-                } else if (ralNumber >= 9000) {
-                    suggestedType = 'E'; // Grigi/bianchi/neri spesso estetici
-                } else {
-                    suggestedType = 'E'; // Altri RAL generalmente estetici
-                }
-            } else if (/^\d{8}$/.test(colorCode)) {
-                // Codici a 8 cifre: spesso kit o reintegri
-                suggestedType = 'K';
-            } else if (/^\d{6}$/.test(colorCode)) {
-                // Codici a 6 cifre: spesso fissi o kit
-                suggestedType = 'F';
-            } else if (colorCode.length >= 6) {
-                // Altri codici lunghi: spesso kit
-                suggestedType = 'K';
-            }
-            
-            typeSelect.val(suggestedType);
-            typeSelect.addClass('auto-filled');
-            filledCount++;
-        }
-    });
-    
-    if (filledCount > 0) {
-        showBulkMessage(`🤖 Auto-compilati ${filledCount} tipi di colore! Verifica e modifica se necessario.`, 'info');
-        
-        // Aggiungi highlight temporaneo ai campi auto-compilati
-        $('.auto-filled').addClass('highlight-paste');
-        setTimeout(() => {
-            $('.auto-filled').removeClass('highlight-paste auto-filled');
-        }, 3000);
-    } else {
-        showBulkMessage('⚠️ Nessun tipo auto-compilato. Assicurati di aver inserito dei codici colore.', 'warning');
-    }
-}
-
-// Auto-compila i tipi basandosi sui codici colore
-function fillDefaultTypes(cabinId = 'cabin1') {
-    const iscabin1 = cabinId === 'cabin1';
-    const tbody = iscabin1 ? $('#cabin1InputBody') : $('#cabin2InputBody');
-    const prefix = iscabin1 ? 'cabin1' : 'cabin2';
-    let filledCount = 0;
-    
-    tbody.find('tr').each(function() {
-        const rowId = $(this).attr('id');
-        if (!rowId) return;
-        
-        const rowNumber = rowId.replace(`${prefix}Row`, '');
-        const colorInput = $(`#${prefix}Color${rowNumber}`);
-        const typeSelect = $(`#${prefix}Type${rowNumber}`);
-        
-        const colorCode = colorInput.val().trim().toUpperCase();
-        
-        // Solo se il codice è presente e il tipo non è già selezionato
-        if (colorCode && !typeSelect.val()) {
-            let suggestedType = 'E'; // Default: Estetico
-            
-            // Logica per determinare il tipo basandosi sul codice
-            if (colorCode.startsWith('RAL')) {
-                suggestedType = 'E';
-            } else if (/^\d{8}$/.test(colorCode)) {
-                suggestedType = 'K';
-            }
-            
-            typeSelect.val(suggestedType);
-            typeSelect.addClass('auto-filled');
-            filledCount++;
-        }
-    });
-    
-    if (filledCount > 0) {
-        showBulkMessage(`🤖 Auto-compilati ${filledCount} tipi di colore per ${cabinId}! Verifica e modifica se necessario.`, 'info');
-        
-        // Aggiungi highlight temporaneo ai campi auto-compilati
-        $('.auto-filled').addClass('highlight-paste');
-        setTimeout(() => {
-            $('.auto-filled').removeClass('highlight-paste auto-filled');
-        }, 3000);
-    } else {
-        showBulkMessage(`⚠️ Nessun tipo auto-compilato per ${cabinId}. Assicurati di aver inserito dei codici colore.`, 'warning');
-    }
 }
 
 // Processa entrambe le cabine e lancia l'ottimizzazione

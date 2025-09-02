@@ -61,58 +61,6 @@
         </div>
     </div>
 
-    <!-- Add New Transition Form -->
-    <div class="row mb-4">
-        <div class="col-12">
-            <div class="card">
-                <div class="card-header">
-                    <h5 class="card-title mb-0">
-                        <i class="fas fa-exchange-alt me-2"></i>Aggiungi Nuova Transizione
-                    </h5>
-                </div>
-                <div class="card-body">
-                    <form method="POST" action="{{ url_for('manage_cambio_colori') }}">
-                        {{ new_cambio_colori_form.hidden_tag() }}
-                        <div class="row">
-                            <div class="col-md-3">
-                                <div class="mb-3">
-                                    {{ new_cambio_colori_form.source_cluster.label(class="form-label") }}
-                                    {{ new_cambio_colori_form.source_cluster(class="form-control") }}
-                                </div>
-                            </div>
-                            <div class="col-md-3">
-                                <div class="mb-3">
-                                    {{ new_cambio_colori_form.target_cluster.label(class="form-label") }}
-                                    {{ new_cambio_colori_form.target_cluster(class="form-control") }}
-                                </div>
-                            </div>
-                            <div class="col-md-2">
-                                <div class="mb-3">
-                                    {{ new_cambio_colori_form.peso.label(class="form-label") }}
-                                    {{ new_cambio_colori_form.peso(class="form-control") }}
-                                </div>
-                            </div>
-                            <div class="col-md-2">
-                                <div class="mb-3">
-                                    {{ new_cambio_colori_form.required_trigger_type.label(class="form-label") }}
-                                    {{ new_cambio_colori_form.required_trigger_type(class="form-control") }}
-                                </div>
-                            </div>
-                            <div class="col-md-2">
-                                <div class="mb-3">
-                                    <label class="form-label">&nbsp;</label>
-                                    <div>
-                                        {{ new_cambio_colori_form.submit(class="btn btn-success") }}
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </form>
-                </div>
-            </div>
-        </div>
-    </div>
-
     <!-- Existing Cambio Colori -->
     <div class="row">
         <div class="col-12">
@@ -124,96 +72,81 @@
                 </div>
                 <div class="card-body">
                     {% if grouped_rules %}
-                        <div class="table-responsive">
-                            <table class="table table-striped">
-                                <thead>
-                                    <tr>
-                                        <th>ID</th>
-                                        <th>Cluster Sorgente</th>
-                                        <th>Cluster Target</th>
-                                        <th>Peso</th>
-                                        <th>Tipo Trigger</th>
-                                        <th>Colori Transizione</th>
-                                        <th>Azioni</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
                         {% for source_cluster, rules in grouped_rules.items() %}
-                        <div class="mb-4">
-                            <div class="d-flex justify-content-between align-items-center mb-3">
-                                <h6 class="text-primary mb-0">
-                                    <i class="fas fa-arrow-right me-2"></i>Source Cluster: {{ source_cluster }}
-                                    <span class="badge bg-secondary ms-2">{{ rules|length }} regole</span>
-                                </h6>
-                                <form method="POST" action="{{ url_for('delete_cluster_route', cluster_name=source_cluster) }}" style="display: inline;">
-                                    <button type="submit" class="btn btn-sm btn-danger" 
-                                            onclick="return confirm('ATTENZIONE! Sei sicuro di voler eliminare COMPLETAMENTE il cluster \'{{ source_cluster }}\'?\n\nQuesta operazione eliminerà:\n- Tutti i codici colore del cluster\n- Tutte le regole di transizione verso questo cluster\n- Tutte le regole di transizione da questo cluster\n\nL\'operazione NON può essere annullata!')" 
-                                            title="Elimina tutto il cluster">
-                                        <i class="fas fa-trash me-1"></i>Elimina Cluster
-                                    </button>
-                                </form>
+                        <div class="card mb-4 border">
+                            <div class="card-header bg-primary text-white">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <h4 class="mb-1">
+                                            <i class="fas fa-arrow-right me-3"></i>
+                                            Source Cluster: <strong>{{ source_cluster }}</strong>
+                                        </h4>
+                                        <small class="opacity-75">
+                                            <i class="fas fa-list me-2"></i>{{ rules|length }} regole di transizione
+                                        </small>
+                                    </div>
+                                    <form method="POST" action="{{ url_for('delete_cluster_route', cluster_name=source_cluster) }}" style="display: inline;">
+                                        <button type="submit" class="btn btn-outline-light btn-sm" 
+                                                onclick="return confirm('ATTENZIONE! Sei sicuro di voler eliminare COMPLETAMENTE il cluster \'{{ source_cluster }}\'?\n\nQuesta operazione eliminerà:\n- Tutti i codici colore del cluster\n- Tutte le regole di transizione verso questo cluster\n- Tutte le regole di transizione da questo cluster\n\nL\'operazione NON può essere annullata!')" 
+                                                title="Elimina tutto il cluster">
+                                            <i class="fas fa-trash me-2"></i>Elimina Cluster
+                                        </button>
+                                    </form>
+                                </div>
                             </div>
-                            <div class="table-responsive">
-                                <table class="table table-sm table-striped">
-                                    <thead class="table-light">
-                                        <tr>
-                                            <th>ID</th>
-                                            <th>Target Cluster</th>
-                                            <th>Peso</th>
-                                            <th>Trigger Type</th>
-                                            <th>Azioni</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {% for rule in rules %}
-                                        <tr>
-                                            <td>{{ rule.id }}</td>
-                                            <td>{{ rule.target_cluster }}</td>
-                                            <td>{{ rule.peso }}</td>
-                                            <td>{{ rule.required_trigger_type or '-' }}</td>
-                                            <td>
-                                                <form method="POST" action="{{ url_for('edit_cambio_colori_row', row_id=rule.id) }}" style="display: inline;">
-                                                    <button type="submit" class="btn btn-sm btn-outline-primary" title="Modifica">
+                            <div class="card-body p-0">
+                                <div class="table-responsive">
+                                    <table class="table table-hover mb-0">
+                                        <thead class="table-light">
+                                            <tr>
+                                                <th>ID</th>
+                                                <th>Target Cluster</th>
+                                                <th>Peso</th>
+                                                <th>Trigger Type</th>
+                                                <th>Azioni</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {% for rule in rules %}
+                                            <tr>
+                                                <td><strong>{{ rule.id }}</strong></td>
+                                                <td>
+                                                    {{ rule.target_cluster }}
+                                                </td>
+                                                <td>
+                                                    <span class="fw-bold text-primary">{{ rule.peso }}</span>
+                                                </td>
+                                                <td>
+                                                    {% if rule.required_trigger_type %}
+                                                        <span class="badge bg-warning text-dark">{{ rule.required_trigger_type }}</span>
+                                                    {% else %}
+                                                        <span class="text-muted">-</span>
+                                                    {% endif %}
+                                                </td>
+                                                <td>
+                                                    <a href="{{ url_for('edit_cambio_colori_row', row_id=rule.id) }}" class="btn btn-sm btn-outline-primary me-1" title="Modifica">
                                                         <i class="fas fa-edit"></i>
-                                                    </button>
-                                                </form>
-                                                <form method="POST" action="{{ url_for('delete_cambio_colori_row_route', row_id=rule.id) }}" style="display: inline;">
-                                                    <button type="submit" class="btn btn-sm btn-outline-danger" 
-                                                            onclick="return confirm('Sei sicuro di voler eliminare questa regola?')" title="Elimina">
-                                                        <i class="fas fa-trash"></i>
-                                                    </button>
-                                                </form>
-                                            </td>
-                                        </tr>
-                                        {% endfor %}
-                                        <!-- Form per aggiungere nuova regola a questo source cluster -->
-                                        <tr class="table-light">
-                                            <form method="POST" action="{{ url_for('add_cambio_colori_row_route', source_cluster=source_cluster) }}">
-                                                {{ add_row_form_template.hidden_tag() }}
-                                                <td><small class="text-muted">Nuova</small></td>
-                                                <td>
-                                                    {{ add_row_form_template.destination_cluster(class="form-control form-control-sm") }}
+                                                    </a>
+                                                    <form method="POST" action="{{ url_for('delete_cambio_colori_row_route', row_id=rule.id) }}" style="display: inline;">
+                                                        <button type="submit" class="btn btn-sm btn-outline-danger" 
+                                                                onclick="return confirm('Sei sicuro di voler eliminare questa regola?')" title="Elimina">
+                                                            <i class="fas fa-trash"></i>
+                                                        </button>
+                                                    </form>
                                                 </td>
-                                                <td>
-                                                    {{ add_row_form_template.peso(class="form-control form-control-sm") }}
-                                                </td>
-                                                <td>
-                                                    {{ add_row_form_template.required_trigger_type(class="form-control form-control-sm") }}
-                                                </td>
-                                                <td>
-                                                    {{ add_row_form_template.submit(class="btn btn-sm btn-success") }}
-                                                </td>
-                                            </form>
-                                        </tr>
-                                    </tbody>
-                                </table>
+                                            </tr>
+                                            {% endfor %}
+                                        </tbody>
+                                    </table>
+                                </div>
                             </div>
                         </div>
                         {% endfor %}
                     {% else %}
-                        <div class="text-center py-4">
+                        <div class="text-center py-5">
                             <i class="fas fa-exchange-alt fa-3x text-muted mb-3"></i>
-                            <p class="text-muted">Nessuna transizione colore trovata. Aggiungi la prima transizione utilizzando il form sopra.</p>
+                            <h5 class="text-muted">Nessuna transizione colore trovata</h5>
+                            <p class="text-muted">Non ci sono ancora regole di transizione configurate.</p>
                         </div>
                     {% endif %}
                 </div>

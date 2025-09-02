@@ -1647,16 +1647,30 @@ def edit_cambio_colori_row(row_id):
         flash(f"Riga con ID {row_id} non trovata.", "danger")
         return redirect(url_for('manage_cambio_colori'))
 
-    form = CambioColoriRowForm(data=row_data) # Pre-popola il form
+    # Mappa i campi del database ai campi del form
+    form_data = {
+        'source_cluster': row_data['source_cluster'],
+        'destination_cluster': row_data['target_cluster'],
+        'peso': row_data['peso'],
+        'transition_colors': row_data['transition_colors'],
+        'required_trigger_type': row_data['required_trigger_type'],
+        'requires_f_trigger': row_data['required_trigger_type'] == 'F'  # Checkbox checked se è 'F'
+    }
+    
+    form = CambioColoriRowForm(data=form_data) # Pre-popola il form
 
     if form.validate_on_submit():
         transition_colors_str = form.transition_colors.data if form.transition_colors.data else "[]"
+        
+        # Se la checkbox è selezionata, imposta 'F', altrimenti stringa vuota
+        trigger_type = 'F' if form.requires_f_trigger.data else ''
+        
         success = update_cambio_colori_row(
             row_id=row_id,
             target_cluster=form.destination_cluster.data,
             peso=form.peso.data,
             transition_colors=transition_colors_str,
-            required_trigger_type=form.required_trigger_type.data
+            required_trigger_type=trigger_type
         )
         if success:
             flash(f"Riga ID {row_id} aggiornata con successo!", "success")
@@ -1664,7 +1678,11 @@ def edit_cambio_colori_row(row_id):
             flash(f"Errore durante l'aggiornamento della riga ID {row_id}.", "danger")
         return redirect(url_for('manage_cambio_colori'))
     
-    return render_template('edit_cambio_colori_row.html', form=form, row_id=row_id, source_cluster=row_data['source_cluster'])
+    return render_template('edit_cambio_colori_row.html', 
+                         form=form, 
+                         row_id=row_id, 
+                         source_cluster=row_data['source_cluster'],
+                         target_cluster=row_data['target_cluster'])
 
 @app.route('/manage/cambio_colori/delete/<int:row_id>', methods=['POST'])
 def delete_cambio_colori_row_route(row_id):

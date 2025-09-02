@@ -2,7 +2,7 @@
 """Flask-WTF forms for frontend input."""
 
 from flask_wtf import FlaskForm
-from wtforms import TextAreaField, StringField, SubmitField, IntegerField, HiddenField, SelectField
+from wtforms import TextAreaField, StringField, SubmitField, IntegerField, HiddenField, SelectField, BooleanField
 from wtforms.validators import DataRequired, Optional, ValidationError, NumberRange
 import json
 
@@ -48,6 +48,7 @@ class CambioColoriRowForm(CSRFDisabledForm):
     required_trigger_type = StringField('Required Trigger Type:', 
                                         validators=[Optional()],
                                         render_kw={"placeholder": "Es: 'F' (lascia vuoto se non richiesto)"})
+    requires_f_trigger = BooleanField('Richiede Trigger "F"', default=False)
     submit = SubmitField('Salva Riga')
 
 class NewSourceClusterForm(CSRFDisabledForm):
